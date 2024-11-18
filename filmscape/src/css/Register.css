@@ -96,6 +96,12 @@ form input:invalid{
 form input:valid{
     border: 1px solid green;
 }
+form input[type="email"]:invalid{
+    border: 1px solid red;
+}
+form input[type="email"]:valid{
+    border: 1px solid green;
+}
 
 form div {
     position: relative;

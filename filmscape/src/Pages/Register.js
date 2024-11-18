@@ -3,6 +3,7 @@ import { createUserWithEmailAndPassword } from "firebase/auth";
 import React, { useState } from "react";
 import { setDoc, doc } from "firebase/firestore";
 import "../css/Register.css";
+import { Link } from "react-router-dom";
 
 function Register() {
   const [formData, setFormData] = useState({
@@ -71,7 +72,7 @@ function Register() {
     <div className="register">
       {" "}
       <form onSubmit={handlesubmit}>
-        <h2>Welcome to Filmscape</h2>
+        <h2>Welcome to Filmscape !</h2>
         <input
           type="text"
           placeholder="username"
@@ -141,7 +142,7 @@ function Register() {
           )}
         </div>
         <button type="submit">Sign-Up</button>
-        <p className="redirect-text"></p>
+        <p className="redirect-text">Already have an account? <Link to="/login">Login</Link></p>
       </form>
     </div>
   );
