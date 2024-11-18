@@ -1,34 +1,33 @@
-import React from "react";
-import { useState } from "react";
+import React, { useState } from "react";
+import { useNavigate } from "react-router-dom"; 
 import { auth } from "../firebaseConfig";
 import { signInWithEmailAndPassword } from "firebase/auth";
+import { Link } from "react-router-dom";
 import "../css/Login.css";
 
 function Login() {
   const [formData, setFormData] = useState({ email: "", password: "" });
   const [errors, setErrors] = useState({ email: "", password: "" });
+  const navigate = useNavigate(); 
 
-  const handlechange = (e) => {
+  const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
-    // Clear errors when user starts typing
     setErrors({ ...errors, [e.target.name]: "" });
   };
 
-  const handlesubmit = async (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     try {
       await signInWithEmailAndPassword(auth, formData.email, formData.password);
       setErrors({ email: "", password: "" });
-      alert("login successful");
+      alert("Login successful");
+      setFormData({ email: "", password: "" });
+      navigate("/dashboard"); 
     } catch (error) {
-      // Log the error code to see what we're actually getting
-      console.log("Firebase error code:", error.code);
+      console.error("Firebase error code:", error.code); 
 
-      // Handle specific Firebase auth errors
+      
       switch (error.code) {
-        case "auth/invalid-login-credentials":
-          setErrors({ ...errors, email: "Invalid email or password" });
-          break;
         case "auth/invalid-email":
           setErrors({ ...errors, email: "Invalid email format" });
           break;
@@ -44,24 +43,25 @@ function Login() {
         default:
           console.error("Unhandled Firebase auth error:", error.code);
           setErrors({
-            email: error.message || "Login failed. Please try again.",
+            email: "",
+            password: "",
+            general: "Login failed. Please try again.",
           });
-          setFormData({ ...formData, email: "", password: "" });
       }
     }
   };
 
   return (
     <div className="login">
-      <div></div>
-      <form onSubmit={handlesubmit}>
+      <form onSubmit={handleSubmit}>
         <h2>Welcome Back!</h2>
         <div className="form-group">
           <label htmlFor="email">Email</label>
           <input
             type="email"
             placeholder="Email"
-            onChange={handlechange}
+            value={formData.email}
+            onChange={handleChange}
             name="email"
             required
           />
@@ -74,7 +74,8 @@ function Login() {
           <input
             type="password"
             placeholder="Password"
-            onChange={handlechange}
+            value={formData.password}
+            onChange={handleChange}
             name="password"
             required
           />
@@ -82,9 +83,14 @@ function Login() {
             <span className="error-message">{errors.password}</span>
           )}
         </div>
+        {errors.general && (
+          <span className="error-message">{errors.general}</span>
+        )}
         <button type="submit">Login</button>
+        <p className="redirect-text">Don't have an account? <Link to="/register">Register</Link></p>
       </form>
     </div>
   );
 }
+
 export default Login;
