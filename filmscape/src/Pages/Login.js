@@ -1,9 +1,10 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom"; 
 import { auth } from "../firebaseConfig";
-import { signInWithEmailAndPassword } from "firebase/auth";
+import { signInWithEmailAndPassword, updateProfile } from "firebase/auth";
 import { Link } from "react-router-dom";
 import "../css/Login.css";
+import { getFirestore, doc, getDoc } from 'firebase/firestore';
 
 function Login() {
   const [formData, setFormData] = useState({ email: "", password: "" });
@@ -18,7 +19,19 @@ function Login() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      await signInWithEmailAndPassword(auth, formData.email, formData.password);
+      const userCredential = await signInWithEmailAndPassword(auth, formData.email, formData.password);
+      
+      // Fetch additional user data from Firestore
+      const db = getFirestore();
+      const userDoc = await getDoc(doc(db, "users", userCredential.user.uid));
+      
+      if (userDoc.exists()) {
+        // Update user profile with display name
+        await updateProfile(userCredential.user, {
+          displayName: userDoc.data().name
+        });
+      }
+
       setErrors({ email: "", password: "" });
       alert("Login successful");
       setFormData({ email: "", password: "" });
