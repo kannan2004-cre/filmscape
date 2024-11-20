@@ -13,7 +13,7 @@ const Dashboard = ({ onLogout, user }) => {
           <li><Link to="uscenes">Saved Scenes</Link></li>
           <li><Link to="usettings">Edit Account</Link></li>
         </ul>
-        <button onClick={onLogout}>Logout</button>
+        <button onClick={onLogout} className="logout-button">Logout</button>
       </div>
       <div className="dashboard-display">
         <Outlet />
