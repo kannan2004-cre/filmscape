@@ -6,13 +6,15 @@ html,body{
 .maincontainer{
     font-family: "Montserrat", sans-serif;
     display: flex;
+    height: 100vh;
+    overflow: hidden;
 }
 .sidebar{
     display: flex;
     flex-direction: column;
     width: 260px;
     border-right: 2px solid #333333;
-    height: 100vh;
+    height: 100%;
     background-color: #1A1A1A;
     padding-left: 0px;
 }
@@ -38,26 +40,27 @@ li{
     color: #E94560;
     transition: 0.3s ease;
 }
-button{
+.logout-button{
     width: 100px;
     height: 30px;
     display: flex;
     justify-content: center;
     align-items: center;
     margin: 40px;
-    margin-top: 90px;
+    margin-top: auto;
     background-color: #E94560;
     color: #FFFFFF;
 }
-button:hover{
+.logout-button:hover{
     background-color: #C0392B;
     transition: 0.3s ease;
 }
 .dashboard-display{
     background-color: #212121;
-    width: 100vw;
-    height: 100vh;
+    width: 100%;
+    height: 100%;
     color: #FFFFFF;
     text-align: center;
     padding-top: 100px;
+    overflow-y: auto;
 }

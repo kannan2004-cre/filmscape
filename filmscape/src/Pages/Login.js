@@ -21,25 +21,24 @@ function Login() {
     try {
       const userCredential = await signInWithEmailAndPassword(auth, formData.email, formData.password);
       
-      // Fetch additional user data from Firestore
-      const db = getFirestore();
-      const userDoc = await getDoc(doc(db, "users", userCredential.user.uid));
-      
-      if (userDoc.exists()) {
-        // Update user profile with display name
-        await updateProfile(userCredential.user, {
-          displayName: userDoc.data().name
-        });
+      try {
+        const db = getFirestore();
+        const userDoc = await getDoc(doc(db, "users", userCredential.user.uid));
+        
+        if (userDoc.exists()) {
+          await updateProfile(userCredential.user, {
+            displayName: userDoc.data().name
+          });
+        }
+      } catch (profileError) {
+        console.error("Error updating profile:", profileError);
       }
 
       setErrors({ email: "", password: "" });
-      alert("Login successful");
-      setFormData({ email: "", password: "" });
       navigate("/dashboard"); 
     } catch (error) {
-      console.error("Firebase error code:", error.code); 
+      console.error("Login error:", error);
 
-      
       switch (error.code) {
         case "auth/invalid-email":
           setErrors({ ...errors, email: "Invalid email format" });
@@ -48,13 +47,13 @@ function Login() {
           setErrors({ ...errors, email: "Email not found" });
           break;
         case "auth/wrong-password":
-          setErrors({ ...errors, password: "Incorrect password" });
+        case "auth/invalid-credential":
+          setErrors({ ...errors, password: "Incorrect email or password" });
           break;
         case "auth/missing-password":
           setErrors({ ...errors, password: "Password is required" });
           break;
         default:
-          console.error("Unhandled Firebase auth error:", error.code);
           setErrors({
             email: "",
             password: "",
