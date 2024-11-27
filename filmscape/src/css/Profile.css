@@ -12,7 +12,7 @@
     box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.5);
     gap: 10px;
 }
-h2{
+.profile-head{
     margin-right: 300px;
     margin-bottom: 20px;
     color: #FFD700;
