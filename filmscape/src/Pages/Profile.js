@@ -1,11 +1,11 @@
 import React, {useState, useEffect} from "react";
 import "../css/Profile.css";
-import logo from "../images/logo.png";
 import { auth } from "../firebaseConfig";
 import { db } from "../firebaseConfig";
 import { doc, getDoc } from "firebase/firestore";
 
-const Profile = ({ user }) => {
+const Profile = ({ user , location }) => {
+  const { name, email, photoURL } = location?.state || {};
   const [userData, setUserData] = useState(null);
   const [loading, setLoading] = useState(true);
   useEffect(() => {
@@ -39,18 +39,25 @@ const Profile = ({ user }) => {
     return <div>No user data found.</div>;
   }
 
+  console.log("Photo URL:", photoURL);
+
   return (
     <div className="profile-div">
-      <h2>Profile</h2>
-      <img src={logo} alt="User Profile" />
+      <h2 className="profile-head">Profile</h2>
+      {photoURL ? (
+        <img src={photoURL} alt="User Profile" />
+      ) : (
+        <img src={require("../images/logo1.png")} alt="Placeholder" />
+
+      )}
       <div className="profile-sub">
         <div className="info-row">
           <h3>Name:</h3>
-          <h4>{userData.name}</h4>
+          <h4>{name || userData?.name}</h4>
         </div>
         <div className="info-row">
           <h3>Email:</h3>
-          <h4>{userData.email}</h4>
+          <h4>{email || userData?.email}</h4>
         </div>
       </div>
     </div>

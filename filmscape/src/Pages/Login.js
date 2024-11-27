@@ -1,41 +1,76 @@
 import React, { useState } from "react";
-import { useNavigate } from "react-router-dom"; 
+import { useNavigate } from "react-router-dom";
 import { auth } from "../firebaseConfig";
-import { signInWithEmailAndPassword, updateProfile } from "firebase/auth";
+import {
+  signInWithEmailAndPassword,
+  updateProfile,
+  GoogleAuthProvider,
+  signInWithPopup,
+} from "firebase/auth";
 import { Link } from "react-router-dom";
 import "../css/Login.css";
-import { getFirestore, doc, getDoc } from 'firebase/firestore';
+import { getFirestore, doc, getDoc, setDoc } from "firebase/firestore";
 
 function Login() {
   const [formData, setFormData] = useState({ email: "", password: "" });
   const [errors, setErrors] = useState({ email: "", password: "" });
-  const navigate = useNavigate(); 
+  const navigate = useNavigate();
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
     setErrors({ ...errors, [e.target.name]: "" });
   };
 
+  const handleGooglelogin = async () => {
+    const provider = new GoogleAuthProvider();
+    try {
+      const result = await signInWithPopup(auth, provider);
+      const user = result.user;
+      console.log("Logged in successfully");
+      alert(`Welcome ${user.displayName} to filmscape!`);
+
+      // Save user's scripts, scenes, and other data if not already saved
+      const db = getFirestore();
+      const userDocRef = doc(db, "users", user.uid);
+      const userDoc = await getDoc(userDocRef);
+      if (!userDoc.exists()) {
+        await setDoc(userDocRef, {
+          name: user.displayName,
+          email: user.email,
+          photoURL: user.photoURL,
+          scripts: [],
+          scenes: [],
+        });
+      }
+
+      navigate("/dashboard", { state: { name: user.displayName, email: user.email, photoURL: user.photoURL } });
+    } catch (error) {
+      console.log(error);
+      alert("Something went wrong!");
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const userCredential = await signInWithEmailAndPassword(auth, formData.email, formData.password);
-      
-      try {
-        const db = getFirestore();
-        const userDoc = await getDoc(doc(db, "users", userCredential.user.uid));
-        
-        if (userDoc.exists()) {
-          await updateProfile(userCredential.user, {
-            displayName: userDoc.data().name
-          });
-        }
-      } catch (profileError) {
-        console.error("Error updating profile:", profileError);
+      const userCredential = await signInWithEmailAndPassword(
+        auth,
+        formData.email,
+        formData.password
+      );
+
+      // Update user's profile with their name from the database if available
+      const db = getFirestore();
+      const userDocRef = doc(db, "users", userCredential.user.uid);
+      const userDoc = await getDoc(userDocRef);
+      if (userDoc.exists()) {
+        await updateProfile(userCredential.user, {
+          displayName: userDoc.data().name,
+        });
       }
 
       setErrors({ email: "", password: "" });
-      navigate("/dashboard"); 
+      navigate("/dashboard");
     } catch (error) {
       console.error("Login error:", error);
 
@@ -99,7 +134,12 @@ function Login() {
           <span className="error-message">{errors.general}</span>
         )}
         <button type="submit">Login</button>
-        <p className="redirect-text">Don't have an account? <Link to="/register">Register</Link></p>
+        <button onClick={handleGooglelogin} className="google-login">
+          Sign-In with Google
+        </button>
+        <p className="redirect-text">
+          Don't have an account? <Link to="/register">Register</Link>
+        </p>
       </form>
     </div>
   );
