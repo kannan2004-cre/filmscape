@@ -1,5 +1,5 @@
 import React from 'react';
-import "../css/Userscenes.css"
+import "../css/Userscenesscripts.css"
 
 const UScenes = ({ user }) => {
   return (
