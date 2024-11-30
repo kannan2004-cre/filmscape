@@ -1,13 +1,12 @@
-import React, {useState, useEffect} from "react";
+import React, { useState, useEffect } from "react";
 import "../css/Profile.css";
-import { auth } from "../firebaseConfig";
-import { db } from "../firebaseConfig";
+import { auth, db } from "../firebaseConfig";
 import { doc, getDoc } from "firebase/firestore";
 
-const Profile = ({ user , location }) => {
-  const { name, email, photoURL } = location?.state || {};
+const Profile = () => {
   const [userData, setUserData] = useState(null);
   const [loading, setLoading] = useState(true);
+
   useEffect(() => {
     const fetchUserData = async () => {
       try {
@@ -19,18 +18,19 @@ const Profile = ({ user , location }) => {
           if (userSnapshot.exists()) {
             setUserData(userSnapshot.data());
           } else {
-            console.error("No such document!");
+            console.error("No user document found!");
           }
         }
       } catch (error) {
         console.error("Error fetching user data:", error);
-      }finally {
+      } finally {
         setLoading(false);
       }
     };
 
     fetchUserData();
   }, []);
+
   if (loading) {
     return <div>Loading...</div>;
   }
@@ -39,25 +39,22 @@ const Profile = ({ user , location }) => {
     return <div>No user data found.</div>;
   }
 
-  console.log("Photo URL:", photoURL);
-
   return (
     <div className="profile-div">
       <h2 className="profile-head">Profile</h2>
-      {photoURL ? (
-        <img src={photoURL} alt="User Profile" />
-      ) : (
-        <img src={require("../images/logo1.png")} alt="Placeholder" />
-
-      )}
+      <img
+        src={userData.photoURL || "../images/placeholderImage.webp"} // Use the photoURL or a placeholder
+        alt="User Profile"
+        className="profile-img"
+      />
       <div className="profile-sub">
         <div className="info-row">
           <h3>Name:</h3>
-          <h4>{name || userData?.name}</h4>
+          <h4>{userData.name || "Unknown"}</h4>
         </div>
         <div className="info-row">
           <h3>Email:</h3>
-          <h4>{email || userData?.email}</h4>
+          <h4>{userData.email || "Unknown"}</h4>
         </div>
       </div>
     </div>
