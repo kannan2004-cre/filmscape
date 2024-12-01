@@ -38,12 +38,11 @@ function Login() {
           name: user.displayName,
           email: user.email,
           photoURL: user.photoURL,
-          scripts: [],
-          scenes: [],
+          projects:[]
         });
       }
 
-      navigate("/dashboard", { state: { name: user.displayName, email: user.email, photoURL: user.photoURL } });
+      navigate("/index", { state: { name: user.displayName, email: user.email, photoURL: user.photoURL } });
     } catch (error) {
       console.log(error);
       alert("Something went wrong!");
