@@ -1,0 +1,17 @@
+.edit{
+    width: 450px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin: auto;
+}
+.form-edit{
+    display: flex;
+    justify-content: center;
+    flex-direction: column;
+    gap: 20px;
+    align-items: center;
+}
+.edit-button{
+    margin-top: 10px;
+}
