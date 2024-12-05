@@ -3,7 +3,7 @@ import { createUserWithEmailAndPassword } from "firebase/auth";
 import React, { useState } from "react";
 import { setDoc, doc } from "firebase/firestore";
 import "../css/Register.css";
-import { Link } from "react-router-dom";
+import { Link , useNavigate} from "react-router-dom";
 
 function Register() {
   const [formData, setFormData] = useState({
@@ -11,6 +11,7 @@ function Register() {
     email: "",
     password: "",
   });
+  const navigate = useNavigate();
 
   const [passwordRequirements, setPasswordRequirements] = useState({
     hasUpperCase: false,
@@ -64,6 +65,7 @@ function Register() {
         createdat: new Date(),
       });
       alert("User created successfully");
+      navigate("/login");
     } catch (error) {
       alert("Registration failed!");
     }
