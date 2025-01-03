@@ -13,12 +13,12 @@ import { getFirestore, doc, getDoc, setDoc } from "firebase/firestore";
 
 function Login() {
   const [formData, setFormData] = useState({ email: "", password: "" });
-  const [errors, setErrors] = useState({ email: "", password: "" });
+  const [errors, setErrors] = useState({ email: "", password: "", general: "" });
   const navigate = useNavigate();
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
-    setErrors({ ...errors, [e.target.name]: "" });
+    setErrors({ ...errors, [e.target.name]: "", general: "" });
   };
 
   const handleGooglelogin = async () => {
@@ -29,7 +29,6 @@ function Login() {
       console.log("Logged in successfully");
       alert(`Welcome ${user.displayName} to filmscape!`);
 
-      // Save user's scripts, scenes, and other data if not already saved
       const db = getFirestore();
       const userDocRef = doc(db, "users", user.uid);
       const userDoc = await getDoc(userDocRef);
@@ -38,14 +37,18 @@ function Login() {
           name: user.displayName,
           email: user.email,
           photoURL: user.photoURL,
-          projects:[]
+          projects: []
         });
       }
 
       navigate("/index", { state: { name: user.displayName, email: user.email, photoURL: user.photoURL } });
     } catch (error) {
-      console.log(error);
-      alert("Something went wrong!");
+      console.error("Google login error:", error);
+      if (error.code === "permission-denied" || error.message.includes("Missing or insufficient permissions")) {
+        alert("Permission denied. Please check your access rights.");
+      } else {
+        alert("Something went wrong!");
+      }
     }
   };
 
@@ -58,7 +61,6 @@ function Login() {
         formData.password
       );
 
-      // Update user's profile with their name from the database if available
       const db = getFirestore();
       const userDocRef = doc(db, "users", userCredential.user.uid);
       const userDoc = await getDoc(userDocRef);
@@ -68,7 +70,7 @@ function Login() {
         });
       }
 
-      setErrors({ email: "", password: "" });
+      setErrors({ email: "", password: "", general: "" });
       navigate("/dashboard");
     } catch (error) {
       console.error("Login error:", error);
@@ -86,6 +88,10 @@ function Login() {
           break;
         case "auth/missing-password":
           setErrors({ ...errors, password: "Password is required" });
+          break;
+        case "permission-denied":
+        case "firestore/permission-denied":
+          setErrors({ ...errors, general: "Permission denied. Please check your access rights." });
           break;
         default:
           setErrors({

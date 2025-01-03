@@ -7,6 +7,7 @@ function Index(){
         <div>
             <h1>this is Index</h1>
             <button onClick={() => navigate("/dashboard")}>dashboard</button>
+            <button onClick={() => navigate("/scripts")}>Scripts</button>
         </div>
     );
 }

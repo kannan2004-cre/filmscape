@@ -7,6 +7,7 @@ import UScripts from "./Pages/userScripts";
 import UScenes from "./Pages/userScenes";
 import USettings from "./Pages/userSettings";
 import Index from "./Pages/index";
+import Scripts from "./Pages/Scripts";
 import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
 import { onAuthStateChanged, signOut } from "firebase/auth";
 import { auth } from "./firebaseConfig";
@@ -51,6 +52,7 @@ function App() {
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
         <Route path="/index" element={<Index />} />
+        <Route path="/scripts" element={<Scripts />} />
 
         {/* Protected Dashboard with nested routes */}
         <Route
