@@ -10,8 +10,8 @@ const UScenes = ({ user }) => {
           <div className="scene-item">
             <h4>1.</h4>
             <h3>Scene Name</h3>
-            <button>Load Scene</button>
-            <button>delete scene</button>
+            <button>Load Scenes</button>
+            <button>delete scenes</button>
           </div>
           <div className="scene-item">
             <h4>1.</h4>
