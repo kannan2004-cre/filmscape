@@ -1,0 +1,169 @@
+body{
+    margin: 0px;
+}
+.scripts-head{
+    display: flex;
+    justify-content: space-around;
+    margin: 20px;
+    background-color: #4d4c4a;
+    border-bottom: 1px solid #4d4c4a;
+    padding: 10px;
+    border-radius: 10px;
+}
+
+.head-first ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+}
+
+.head-first li {
+    margin-right: 20px;
+    cursor: pointer;
+    transition: color 0.3s;
+    color: #ffffff;
+}
+
+.head-first li:hover {
+    color: #5fa8f6;
+}
+
+.head-second button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: #ff0000;
+    color: white;
+    border: none;
+    padding: 10px 15px;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+.head-second button:hover {
+    background-color: #b34500;
+}
+.script-write{
+    display: flex;
+}
+.scripts-canvas{
+    border: 2px solid white;
+    margin: 10px;
+    width: 800px;
+    height: 80vh;
+    background-color: #ffffff;
+    padding: 10px;
+    overflow-y: auto;
+    overflow-x: auto;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+}
+
+.console-text {
+    background-color: #f0f0f0;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    padding: 15px;
+    margin: 10px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.console-text h2 {
+    color: #333;
+    margin-bottom: 10px;
+}
+
+.console-text p {
+    color: #666;
+    margin-bottom: 15px;
+}
+
+.console-text select,
+.console-text button,
+.console-text textarea {
+    margin-right: 10px;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+}
+
+.console-text select {
+    background-color: #e9ecef;
+    color: #495057;
+    border: 1px solid #ced4da;
+    border-radius: 5px;
+    padding: 10px;
+    appearance: none;
+    cursor: pointer;
+    transition: border-color 0.3s;
+}
+
+.console-text select:focus {
+    border-color: #80bdff;
+    outline: none;
+}
+
+.console-text button {
+    background-color: #007bff;
+    color: white;
+    transition: background-color 0.3s;
+}
+
+.console-text button:hover {
+    background-color: #0056b3;
+}
+
+.console-text textarea {
+    width: auto;
+    flex-grow: 1;
+    resize: none;
+}
+
+.text-formatting {
+    margin-top: 10px;
+    display: flex;
+    gap: 10px;
+}
+
+.text-formatting button {
+    padding: 8px 12px;
+    border: none;
+    border-radius: 5px;
+    background-color: #007bff;
+    color: white;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+.text-formatting button:hover {
+    background-color: #0056b3;
+}
+
+.formatted-text {
+    margin-top: 20px;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    background-color: #f9f9f9;
+}
+
+.text-editor {
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    padding: 10px;
+    min-height: 50px;
+    max-height: 100px;
+    max-width: 400px;
+    background-color: #ffffff;
+    margin-top: 10px;
+    overflow-y: auto;
+    overflow-x: auto;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+}
