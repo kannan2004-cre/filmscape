@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { db } from "../firebaseConfig"; // Ensure this path is correct
+import { db, auth } from "../firebaseConfig"; // Ensure this path is correct
 import { arrayUnion, arrayRemove, doc, getDoc, updateDoc } from "firebase/firestore"; // Import Firestore functions
 import { initializeApp } from "firebase/app"; // Import Firebase app initialization
 import "../css/ScriptEditor.css";
@@ -13,58 +13,13 @@ function Scripts() {
   const [newScriptName, setNewScriptName] = useState("");
   const [showProjectModal, setShowProjectModal] = useState(false);
   const [showNewProjectModal, setShowNewProjectModal] = useState(false);
-  const userId = "currentUserId"; // Replace with actual user ID logic
-
-  useEffect(() => {
-    const fetchProjects = async () => {
-      const userDocRef = doc(db, "users", userId);
-      const userDoc = await getDoc(userDocRef);
-      if (userDoc.exists()) {
-        setProjects(userDoc.data().projects || []);
-      }
-    };
-    fetchProjects();
-  }, [userId]);
+  const userId = auth.currentUser ? auth.currentUser.uid : null; // Get the current user's ID
 
   const handleSaveScript = () => {
     if (projects.length > 0) {
       setShowProjectModal(true); // Show project selection modal
     } else {
       setShowNewProjectModal(true); // Show new project creation modal
-    }
-  };
-
-  const createProject = async () => {
-    if (!newProjectName) return; // Prevent empty project names
-    const projectData = {
-      projectName: newProjectName,
-      scenes: [],
-      scripts: [],
-    };
-    const userDocRef = doc(db, "users", userId);
-    await updateDoc(userDocRef, {
-      projects: arrayUnion(projectData), // Use arrayUnion from Firestore
-    });
-    setNewProjectName(""); // Reset input
-    setShowNewProjectModal(false); // Close modal
-  };
-
-  const saveScriptToProject = async () => {
-    if (!selectedProject || !newScriptName) return; // Prevent empty selections
-    const projectIndex = projects.findIndex(p => p.projectName === selectedProject);
-    if (projectIndex !== -1) {
-      const updatedProject = { ...projects[projectIndex] };
-      updatedProject.scripts.push({ scriptName: newScriptName, content: text });
-      const userDocRef = doc(db, "users", userId);
-      await updateDoc(userDocRef, {
-        projects: arrayRemove(projects[projectIndex]), // Use arrayRemove from Firestore
-      });
-      await updateDoc(userDocRef, {
-        projects: arrayUnion(updatedProject), // Use arrayUnion from Firestore
-      });
-      setNewScriptName(""); // Reset input
-      setSelectedProject(""); // Reset selected project
-      setShowProjectModal(false); // Close modal
     }
   };
 
@@ -111,7 +66,6 @@ function Scripts() {
             value={newScriptName}
             onChange={(e) => setNewScriptName(e.target.value)}
           />
-          <button onClick={saveScriptToProject}>Save Script</button>
           <button onClick={() => setShowProjectModal(false)}>Cancel</button>
         </div>
       )}
@@ -126,7 +80,6 @@ function Scripts() {
             value={newProjectName}
             onChange={(e) => setNewProjectName(e.target.value)}
           />
-          <button onClick={createProject}>Create Project</button>
           <button onClick={() => setShowNewProjectModal(false)}>Cancel</button>
         </div>
       )}

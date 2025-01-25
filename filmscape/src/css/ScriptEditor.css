@@ -1,7 +1,8 @@
-body{
+body {
     margin: 0px;
 }
-.scripts-head{
+
+.scripts-head {
     display: flex;
     justify-content: space-around;
     margin: 20px;
@@ -45,10 +46,12 @@ body{
 .head-second button:hover {
     background-color: #b34500;
 }
-.script-write{
+
+.script-write {
     display: flex;
 }
-.scripts-canvas{
+
+.scripts-canvas {
     border: 2px solid white;
     margin: 10px;
     width: 800px;
