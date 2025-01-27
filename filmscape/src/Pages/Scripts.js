@@ -3,6 +3,7 @@ import { db, auth } from "../firebaseConfig"; // Ensure this path is correct
 import { arrayUnion, arrayRemove, doc, getDoc, updateDoc } from "firebase/firestore"; // Import Firestore functions
 import { initializeApp } from "firebase/app"; // Import Firebase app initialization
 import "../css/ScriptEditor.css";
+import Navbar from "../Components/Navbar";
 
 function Scripts() {
   const [text, setText] = useState("");
@@ -36,7 +37,9 @@ function Scripts() {
   };
 
   return (
+    
     <div className="scripts-main">
+      <Navbar/>
       <div className="scripts-head">
         <div className="head-first">
           <ul>
