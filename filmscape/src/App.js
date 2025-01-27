@@ -8,6 +8,7 @@ import UScenes from "./Pages/userScenes";
 import USettings from "./Pages/userSettings";
 import Index from "./Pages/index";
 import Scripts from "./Pages/Scripts";
+import Navbar from "./Components/Navbar";
 import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
 import { onAuthStateChanged, signOut } from "firebase/auth";
 import { auth } from "./firebaseConfig";
@@ -49,6 +50,7 @@ function App() {
     <Router future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
       <Routes>
         {/* Public Routes */}
+        <Route path="/navbar" element={<Navbar/>} />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
         <Route path="/index" element={<Index />} />

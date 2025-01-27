@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { auth } from "../firebaseConfig";
 import {
@@ -10,11 +10,21 @@ import {
 import { Link } from "react-router-dom";
 import "../css/Login.css";
 import { getFirestore, doc, getDoc, setDoc } from "firebase/firestore";
+import Navbar from "../Components/Navbar";
 
 function Login() {
+  const [isLoggedIn, setIsLoggedIn] = useState(() => {
+    // Check local storage for login state
+    return localStorage.getItem("isLoggedIn") === "true";
+  });
   const [formData, setFormData] = useState({ email: "", password: "" });
   const [errors, setErrors] = useState({ email: "", password: "", general: "" });
   const navigate = useNavigate();
+
+  useEffect(() => {
+    // Update local storage whenever isLoggedIn changes
+    localStorage.setItem("isLoggedIn", isLoggedIn);
+  }, [isLoggedIn]);
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -28,6 +38,7 @@ function Login() {
       const user = result.user;
       console.log("Logged in successfully");
       alert(`Welcome ${user.displayName} to filmscape!`);
+      setIsLoggedIn(true); // Set to true upon successful Google login
 
       const db = getFirestore();
       const userDocRef = doc(db, "users", user.uid);
@@ -41,7 +52,7 @@ function Login() {
         });
       }
 
-      navigate("/index", { state: { name: user.displayName, email: user.email, photoURL: user.photoURL } });
+      navigate("/index", { state: { name: user.displayName, email: user.email, photoURL: user.photoURL, isLoggedIn: true } });
     } catch (error) {
       console.error("Google login error:", error);
       if (error.code === "permission-denied" || error.message.includes("Missing or insufficient permissions")) {
@@ -71,6 +82,7 @@ function Login() {
       }
 
       setErrors({ email: "", password: "", general: "" });
+      setIsLoggedIn(true); // Set to true upon successful email login
       navigate("/dashboard");
     } catch (error) {
       console.error("Login error:", error);
@@ -104,49 +116,52 @@ function Login() {
   };
 
   return (
-    <div className="login">
-      <form onSubmit={handleSubmit}>
-        <h2>Welcome Back!</h2>
-        <div className="form-group">
-          <label htmlFor="email">Email</label>
-          <input
-            type="email"
-            placeholder="Email"
-            value={formData.email}
-            onChange={handleChange}
-            name="email"
-            required
-          />
-          {errors.email && (
-            <span className="error-message">{errors.email}</span>
+    <>
+      <Navbar isLoggedIn={isLoggedIn} />
+      <div className="login">
+        <form onSubmit={handleSubmit}>
+          <h2>Welcome Back!</h2>
+          <div className="form-group">
+            <label htmlFor="email">Email</label>
+            <input
+              type="email"
+              placeholder="Email"
+              value={formData.email}
+              onChange={handleChange}
+              name="email"
+              required
+            />
+            {errors.email && (
+              <span className="error-message">{errors.email}</span>
+            )}
+          </div>
+          <div className="form-group">
+            <label htmlFor="password">Password</label>
+            <input
+              type="password"
+              placeholder="Password"
+              value={formData.password}
+              onChange={handleChange}
+              name="password"
+              required
+            />
+            {errors.password && (
+              <span className="error-message">{errors.password}</span>
+            )}
+          </div>
+          {errors.general && (
+            <span className="error-message">{errors.general}</span>
           )}
-        </div>
-        <div className="form-group">
-          <label htmlFor="password">Password</label>
-          <input
-            type="password"
-            placeholder="Password"
-            value={formData.password}
-            onChange={handleChange}
-            name="password"
-            required
-          />
-          {errors.password && (
-            <span className="error-message">{errors.password}</span>
-          )}
-        </div>
-        {errors.general && (
-          <span className="error-message">{errors.general}</span>
-        )}
-        <button type="submit">Login</button>
-        <button onClick={handleGooglelogin} className="google-login">
-          Sign-In with Google
-        </button>
-        <p className="redirect-text">
-          Don't have an account? <Link to="/register">Register</Link>
-        </p>
-      </form>
-    </div>
+          <button type="submit">Login</button>
+          <button onClick={handleGooglelogin} className="google-login">
+            Sign-In with Google
+          </button>
+          <p className="redirect-text">
+            Don't have an account? <Link to="/register">Register</Link>
+          </p>
+        </form>
+      </div>
+    </>
   );
 }
 
