@@ -63,7 +63,7 @@ form input[type="text"] {
     color: #FAF9F6;
     background-color: #2F2F2F;
     border: none;
-    height: 30px;
+    height: 50px;
     border-radius: 5px;
     -webkit-box-shadow: 0 0 0 30px #2F2F2F inset !important;
     -webkit-text-fill-color: #FAF9F6 !important;

@@ -75,6 +75,7 @@ function Register() {
       {" "}
       <form onSubmit={handlesubmit}>
         <h2>Welcome to Filmscape !</h2>
+        <label htmlFor="username">Username</label>
         <input
           type="text"
           placeholder="username"
@@ -82,6 +83,7 @@ function Register() {
           name="name"
           required
         ></input>
+        <label htmlFor="email">Email</label>
         <input
           type="email"
           placeholder="Email"
@@ -90,6 +92,7 @@ function Register() {
           required
         ></input>
         <div>
+        <label htmlFor="password">Password</label>
           <input
             type="password"
             placeholder="password"
