@@ -14,6 +14,7 @@ import { onAuthStateChanged, signOut } from "firebase/auth";
 import { auth } from "./firebaseConfig";
 import Protectedroute from "./Pages/Protectedroute"; // Import the ProtectedRoute
 import { setPersistence, browserSessionPersistence } from "firebase/auth";
+import { AuthProvider } from "./context/AuthContext";
 
 function App() {
   const [user, setUser] = useState(null);
@@ -47,38 +48,40 @@ function App() {
   }
 
   return (
-    <Router future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
-      <Routes>
-        {/* Public Routes */}
-        <Route path="/navbar" element={<Navbar/>} />
-        <Route path="/login" element={<Login />} />
-        <Route path="/register" element={<Register />} />
-        <Route path="/index" element={<Index />} />
-        <Route path="/scripts" element={<Scripts />} />
+    <AuthProvider>
+      <Router future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
+        <Routes>
+          {/* Public Routes */}
+          <Route path="/navbar" element={<Navbar />} />
+          <Route path="/login" element={<Login />} />
+          <Route path="/register" element={<Register />} />
+          <Route path="/index" element={<Index />} />
+          <Route path="/scripts" element={<Scripts />} />
 
-        {/* Protected Dashboard with nested routes */}
-        <Route
-          path="/"
-          element={
-            <Protectedroute user={user}>
-              <Dashboard onLogout={handleLogout} user={user} />
-            </Protectedroute>
-          }
-        >
-          {/* Index route for dashboard default content */}
-          <Route index element={<div>Welcome to Dashboard</div>} />
-          
-          {/* Nested routes */}
-          <Route path="profile" element={<Profile user={user} />} />
-          <Route path="uscripts" element={<UScripts user={user} />} />
-          <Route path="uscenes" element={<UScenes user={user} />} />
-          <Route path="usettings" element={<USettings user={user} />} />
-        </Route>
+          {/* Protected Dashboard with nested routes */}
+          <Route
+            path="/"
+            element={
+              <Protectedroute user={user}>
+                <Dashboard onLogout={handleLogout} user={user} />
+              </Protectedroute>
+            }
+          >
+            {/* Index route for dashboard default content */}
+            <Route index element={<div>Welcome to Dashboard</div>} />
 
-        {/* Add this redirect route */}
-        <Route path="/dashboard" element={<Navigate to="/" replace />} />
-      </Routes>
-    </Router>
+            {/* Nested routes */}
+            <Route path="profile" element={<Profile user={user} />} />
+            <Route path="uscripts" element={<UScripts user={user} />} />
+            <Route path="uscenes" element={<UScenes user={user} />} />
+            <Route path="usettings" element={<USettings user={user} />} />
+          </Route>
+
+          {/* Add this redirect route */}
+          <Route path="/dashboard" element={<Navigate to="/" replace />} />
+        </Routes>
+      </Router>
+    </AuthProvider>
   );
 }
 

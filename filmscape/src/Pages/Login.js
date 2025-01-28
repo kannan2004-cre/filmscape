@@ -10,7 +10,6 @@ import {
 import { Link } from "react-router-dom";
 import "../css/Login.css";
 import { getFirestore, doc, getDoc, setDoc } from "firebase/firestore";
-import Navbar from "../Components/Navbar";
 
 function Login() {
   const [isLoggedIn, setIsLoggedIn] = useState(() => {
@@ -117,7 +116,6 @@ function Login() {
 
   return (
     <>
-      <Navbar isLoggedIn={isLoggedIn} />
       <div className="login">
         <form onSubmit={handleSubmit}>
           <h2>Welcome Back!</h2>
