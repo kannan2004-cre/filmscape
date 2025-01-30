@@ -170,3 +170,38 @@ body {
     white-space: pre-wrap;
     word-wrap: break-word;
 }
+
+.modal {
+    display: flex;
+    flex-direction: column;
+    gap:30px;
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background-color: #ffffff;
+    border: 1px solid #ccc;
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    padding: 20px;
+    z-index: 1000;
+    width: 80%;
+    max-width: 500px;
+}
+.modal li{
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+.modal button{
+    margin-bottom: 10px;
+}
+.option{
+    height: 40px;
+
+}
+
+::selection {
+    background-color: #5fa8f6; /* Highlight color */
+    color: #ffffff; /* Text color */
+}
