@@ -67,3 +67,51 @@
 .navitems a.active {
     color: #FFD700; /* Gold */
 }
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .navmain {
+        flex-direction: column;
+        height: auto;
+        align-items: center;
+    }
+
+    .navmain img {
+        margin: 10px 0;
+    }
+
+    .navmain h2 {
+        margin: 10px 0;
+        font-size: 24px;
+    }
+
+    .navitems ul {
+        flex-direction: column;
+        margin: 0;
+        gap: 20px;
+    }
+
+    .navitems a {
+        font-size: 18px;
+    }
+
+    .navitems button {
+        margin: 20px 0;
+        width: 100px;
+    }
+}
+
+@media (max-width: 480px) {
+    .navmain h2 {
+        font-size: 20px;
+    }
+
+    .navitems a {
+        font-size: 16px;
+    }
+
+    .navitems button {
+        width: 90px;
+        font-size: 15px;
+    }
+}
