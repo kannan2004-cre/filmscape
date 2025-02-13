@@ -9,6 +9,7 @@ import USettings from "./Pages/userSettings";
 import Index from "./Pages/index";
 import Scripts from "./Pages/Scripts";
 import Navbar from "./Components/Navbar";
+import Storyboard from "./Pages/Storyboard";
 import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
 import { onAuthStateChanged, signOut } from "firebase/auth";
 import { auth } from "./firebaseConfig";
@@ -57,6 +58,7 @@ function App() {
           <Route path="/register" element={<Register />} />
           <Route path="/index" element={<Index />} />
           <Route path="/scripts" element={<Scripts />} />
+          <Route path="/storyboard" element={<Storyboard />} />
 
           {/* Protected Dashboard with nested routes */}
           <Route
