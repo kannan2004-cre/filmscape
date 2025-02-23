@@ -67,9 +67,11 @@ const Storyboard = () => {
     const [selectedElement, setSelectedElement] = useState(null);
     const [draggedElement, setDraggedElement] = useState(null);
     const [isResizing, setIsResizing] = useState(false);
-    const [resizeDirection, setResizeDirection] = useState(null);
     const canvasRef = useRef(null);
-    const initialResizeDataRef = useRef(null);
+    const resizeStartRef = useRef(null);
+    const [isDrawing, setIsDrawing] = useState(false);
+    const [drawnPaths, setDrawnPaths] = useState([]);
+    const [isErasing, setIsErasing] = useState(false);
 
     const handleAddElement = (type) => {
         const newElement = {
@@ -80,7 +82,10 @@ const Storyboard = () => {
             rotation: 0,
             width: defaultShapes[type].width,
             height: defaultShapes[type].height,
-            zIndex: defaultShapes[type].zIndex
+            zIndex: defaultShapes[type].zIndex,
+            opacity: 1,
+            scale: 1,
+            lockAspectRatio: true // Default to locked aspect ratio
         };
         setElements([...elements, newElement]);
     };
@@ -92,7 +97,6 @@ const Storyboard = () => {
         }
         setDraggedElement(element);
         setSelectedElement(element);
-        // Store initial position for accurate dragging
         const rect = e.target.getBoundingClientRect();
         const offsetX = e.clientX - rect.left;
         const offsetY = e.clientY - rect.top;
@@ -100,12 +104,10 @@ const Storyboard = () => {
         e.dataTransfer.setData('text/plain', element.id);
         e.dataTransfer.effectAllowed = 'move';
         
-        // Set drag image to be transparent
         const img = new Image();
         img.src = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
         e.dataTransfer.setDragImage(img, 0, 0);
         
-        // Store offset in the draggedElement
         setDraggedElement({
             ...element,
             offsetX,
@@ -133,7 +135,6 @@ const Storyboard = () => {
             
             setElements(updatedElements);
             
-            // Update selected element
             const updatedElement = updatedElements.find(el => el.id === draggedElement.id);
             if (updatedElement) {
                 setSelectedElement(updatedElement);
@@ -147,7 +148,6 @@ const Storyboard = () => {
         if (draggedElement && !isResizing) {
             const canvasRect = canvasRef.current.getBoundingClientRect();
             
-            // Update the element position during drag
             const updatedElements = elements.map(el => {
                 if (el.id === draggedElement.id) {
                     return {
@@ -161,7 +161,6 @@ const Storyboard = () => {
             
             setElements(updatedElements);
             
-            // Update selected element
             const updatedElement = updatedElements.find(el => el.id === draggedElement.id);
             if (updatedElement) {
                 setSelectedElement(updatedElement);
@@ -195,120 +194,11 @@ const Storyboard = () => {
             });
             setElements(updatedElements);
             
-            // Update selected element
             const updatedElement = updatedElements.find(el => el.id === selectedElement.id);
             if (updatedElement) {
                 setSelectedElement(updatedElement);
             }
         }
-    };
-
-    const handleResizeStart = (e, element, direction) => {
-        e.stopPropagation();
-        e.preventDefault();
-        setIsResizing(true);
-        setResizeDirection(direction);
-        
-        const canvasRect = canvasRef.current.getBoundingClientRect();
-        // Get initial positions and dimensions
-        initialResizeDataRef.current = {
-            id: element.id,
-            initialX: e.clientX,
-            initialY: e.clientY,
-            initialWidth: element.width,
-            initialHeight: element.height,
-            initialLeft: element.x,
-            initialTop: element.y,
-            canvasLeft: canvasRect.left,
-            canvasTop: canvasRect.top
-        };
-        
-        // Set up global mouse move and mouse up handlers
-        document.addEventListener('mousemove', handleResizeMove);
-        document.addEventListener('mouseup', handleResizeEnd);
-    };
-
-    const handleResizeMove = (e) => {
-        if (!isResizing || !initialResizeDataRef.current) return;
-        
-        const data = initialResizeDataRef.current;
-        const deltaX = e.clientX - data.initialX;
-        const deltaY = e.clientY - data.initialY;
-        
-        let newWidth = data.initialWidth;
-        let newHeight = data.initialHeight;
-        let newX = data.initialLeft;
-        let newY = data.initialTop;
-
-        // Adjust dimensions and position based on resize direction
-        switch (resizeDirection) {
-            case 'n':
-                newHeight = Math.max(20, data.initialHeight - deltaY);
-                newY = data.initialTop + data.initialHeight - newHeight;
-                break;
-            case 's':
-                newHeight = Math.max(20, data.initialHeight + deltaY);
-                break;
-            case 'w':
-                newWidth = Math.max(20, data.initialWidth - deltaX);
-                newX = data.initialLeft + data.initialWidth - newWidth;
-                break;
-            case 'e':
-                newWidth = Math.max(20, data.initialWidth + deltaX);
-                break;
-            case 'nw':
-                newWidth = Math.max(20, data.initialWidth - deltaX);
-                newHeight = Math.max(20, data.initialHeight - deltaY);
-                newX = data.initialLeft + data.initialWidth - newWidth;
-                newY = data.initialTop + data.initialHeight - newHeight;
-                break;
-            case 'ne':
-                newWidth = Math.max(20, data.initialWidth + deltaX);
-                newHeight = Math.max(20, data.initialHeight - deltaY);
-                newY = data.initialTop + data.initialHeight - newHeight;
-                break;
-            case 'sw':
-                newWidth = Math.max(20, data.initialWidth - deltaX);
-                newHeight = Math.max(20, data.initialHeight + deltaY);
-                newX = data.initialLeft + data.initialWidth - newWidth;
-                break;
-            case 'se':
-                newWidth = Math.max(20, data.initialWidth + deltaX);
-                newHeight = Math.max(20, data.initialHeight + deltaY);
-                break;
-            default:
-                break;
-        }
-
-        // Update the elements array with new dimensions and position
-        const updatedElements = elements.map(el => {
-            if (el.id === data.id) {
-                return {
-                    ...el,
-                    width: newWidth,
-                    height: newHeight,
-                    x: newX,
-                    y: newY
-                };
-            }
-            return el;
-        });
-        
-        setElements(updatedElements);
-        
-        // Update selected element
-        const updatedElement = updatedElements.find(el => el.id === data.id);
-        if (updatedElement) {
-            setSelectedElement(updatedElement);
-        }
-    };
-
-    const handleResizeEnd = () => {
-        setIsResizing(false);
-        setResizeDirection(null);
-        initialResizeDataRef.current = null;
-        document.removeEventListener('mousemove', handleResizeMove);
-        document.removeEventListener('mouseup', handleResizeEnd);
     };
 
     const handleDelete = () => {
@@ -319,8 +209,453 @@ const Storyboard = () => {
         }
     };
 
-    // Sort elements by zIndex to render them in the correct order
+    const calculateResizedElement = (element, mouseX, mouseY, handle) => {
+        const startData = resizeStartRef.current;
+        if (!startData) return element;
+
+        const canvasRect = canvasRef.current.getBoundingClientRect();
+        const currentX = mouseX - canvasRect.left;
+        const currentY = mouseY - canvasRect.top;
+
+        // Calculate the rotation in radians
+        const rotationRad = (element.rotation * Math.PI) / 180;
+        const cosTheta = Math.cos(rotationRad);
+        const sinTheta = Math.sin(rotationRad);
+
+        // Calculate the change in mouse position
+        const dx = currentX - startData.mouseX;
+        const dy = currentY - startData.mouseY;
+
+        // Rotate the mouse movement to align with the element's rotation
+        const rotatedDX = dx * cosTheta + dy * sinTheta;
+        const rotatedDY = -dx * sinTheta + dy * cosTheta;
+
+        let newWidth = element.width;
+        let newHeight = element.height;
+        let newX = element.x;
+        let newY = element.y;
+
+        // Calculate the center point
+        const centerX = element.x + element.width / 2;
+        const centerY = element.y + element.height / 2;
+
+        // Handle aspect ratio lock
+        const aspectRatio = startData.width / startData.height;
+        const lockAspectRatio = element.lockAspectRatio;
+
+        const updateDimensions = (deltaWidth, deltaHeight, anchorX, anchorY) => {
+            if (lockAspectRatio) {
+                // Use the larger change to maintain aspect ratio
+                const scaleFactor = Math.abs(deltaWidth / startData.width) > Math.abs(deltaHeight / startData.height)
+                    ? Math.abs(deltaWidth / startData.width)
+                    : Math.abs(deltaHeight / startData.height);
+                
+                deltaWidth = startData.width * scaleFactor * Math.sign(deltaWidth);
+                deltaHeight = startData.height * scaleFactor * Math.sign(deltaHeight);
+            }
+
+            // Update width and height
+            newWidth = Math.max(20, startData.width + deltaWidth);
+            newHeight = Math.max(20, startData.height + deltaHeight);
+
+            // Calculate position adjustments based on anchor point
+            if (anchorX !== 0 || anchorY !== 0) {
+                const dw = newWidth - startData.width;
+                const dh = newHeight - startData.height;
+                
+                // Calculate position adjustments in rotated space
+                const adjustX = (dw * anchorX * cosTheta - dh * anchorY * sinTheta) / 2;
+                const adjustY = (dw * anchorX * sinTheta + dh * anchorY * cosTheta) / 2;
+                
+                newX = startData.x - adjustX;
+                newY = startData.y - adjustY;
+            }
+        };
+
+        switch (handle) {
+            case 'n':
+                updateDimensions(0, -rotatedDY, 0, 1);
+                break;
+            case 's':
+                updateDimensions(0, rotatedDY, 0, -1);
+                break;
+            case 'e':
+                updateDimensions(rotatedDX, 0, -1, 0);
+                break;
+            case 'w':
+                updateDimensions(-rotatedDX, 0, 1, 0);
+                break;
+            case 'nw':
+                updateDimensions(-rotatedDX, -rotatedDY, 1, 1);
+                break;
+            case 'ne':
+                updateDimensions(rotatedDX, -rotatedDY, -1, 1);
+                break;
+            case 'sw':
+                updateDimensions(-rotatedDX, rotatedDY, 1, -1);
+                break;
+            case 'se':
+                updateDimensions(rotatedDX, rotatedDY, -1, -1);
+                break;
+        }
+
+        return {
+            ...element,
+            width: newWidth,
+            height: newHeight,
+            x: newX,
+            y: newY
+        };
+    };
+
+    const handleResizeStart = (e, element, handle) => {
+        e.stopPropagation();
+        e.preventDefault();
+        setIsResizing(true);
+
+        const canvasRect = canvasRef.current.getBoundingClientRect();
+        const centerX = element.x + element.width / 2;
+        const centerY = element.y + element.height / 2;
+
+        resizeStartRef.current = {
+            handle,
+            width: element.width,
+            height: element.height,
+            x: element.x,
+            y: element.y,
+            mouseX: e.clientX - canvasRect.left,
+            mouseY: e.clientY - canvasRect.top,
+            centerX,
+            centerY
+        };
+
+        document.addEventListener('mousemove', handleResizeMove);
+        document.addEventListener('mouseup', handleResizeEnd);
+    };
+
+    const handleResizeMove = (e) => {
+        if (!isResizing || !resizeStartRef.current) return;
+
+        const updatedElements = elements.map(el => {
+            if (el.id === selectedElement.id) {
+                return calculateResizedElement(el, e.clientX, e.clientY, resizeStartRef.current.handle);
+            }
+            return el;
+        });
+
+        setElements(updatedElements);
+        const updatedElement = updatedElements.find(el => el.id === selectedElement.id);
+        if (updatedElement) {
+            setSelectedElement(updatedElement);
+        }
+    };
+
+    const handleResizeEnd = () => {
+        setIsResizing(false);
+        resizeStartRef.current = null;
+        document.removeEventListener('mousemove', handleResizeMove);
+        document.removeEventListener('mouseup', handleResizeEnd);
+    };
+
+    const ResizeHandle = ({ position, cursor, onMouseDown }) => (
+        <div
+            className={`resize-handle ${position}`}
+            onMouseDown={onMouseDown}
+            style={{
+                position: 'absolute',
+                width: 10,
+                height: 10,
+                background: '#4CAF50',
+                borderRadius: '50%',
+                cursor,
+                zIndex: 1000,
+                ...getHandlePosition(position)
+            }}
+        />
+    );
+
+    const getHandlePosition = (position) => {
+        const positions = {
+            n: { top: -5, left: '50%', transform: 'translateX(-50%)' },
+            s: { bottom: -5, left: '50%', transform: 'translateX(-50%)' },
+            e: { right: -5, top: '50%', transform: 'translateY(-50%)' },
+            w: { left: -5, top: '50%', transform: 'translateY(-50%)' },
+            nw: { top: -5, left: -5 },
+            ne: { top: -5, right: -5 },
+            sw: { bottom: -5, left: -5 },
+            se: { bottom: -5, right: -5 }
+        };
+        return positions[position];
+    };
+
     const sortedElements = [...elements].sort((a, b) => a.zIndex - b.zIndex);
+
+    const handleMouseDown = (e) => {
+        if (!isResizing && !selectedElement) {
+            const canvasRect = canvasRef.current.getBoundingClientRect();
+            const startX = e.clientX - canvasRect.left;
+            const startY = e.clientY - canvasRect.top;
+
+            if (isErasing) {
+                erasePath(startX, startY);
+            } else {
+                setIsDrawing(true);
+                setDrawnPaths([...drawnPaths, [{ x: startX, y: startY }]]);
+            }
+        }
+    };
+
+    const handleMouseMove = (e) => {
+        if (isDrawing || isErasing) {
+            const canvasRect = canvasRef.current.getBoundingClientRect();
+            const currentX = e.clientX - canvasRect.left;
+            const currentY = e.clientY - canvasRect.top;
+
+            if (isDrawing) {
+                const updatedPaths = [...drawnPaths];
+                const currentPath = updatedPaths[updatedPaths.length - 1];
+                currentPath.push({ x: currentX, y: currentY });
+                setDrawnPaths(updatedPaths);
+            } else if (isErasing) {
+                erasePath(currentX, currentY);
+            }
+        }
+    };
+
+    const handleMouseUp = () => {
+        if (isDrawing) {
+            setIsDrawing(false);
+        }
+    };
+
+    const erasePath = (x, y) => {
+        const eraserRadius = 10; // Define the size of the eraser
+        const updatedPaths = drawnPaths.map(path => {
+            const newPath = [];
+            let isErasingSegment = false;
+
+            for (let i = 0; i < path.length; i++) {
+                const point = path[i];
+                const distance = Math.hypot(point.x - x, point.y - y);
+
+                if (distance > eraserRadius) {
+                    if (isErasingSegment) {
+                        // If we were erasing, start a new segment
+                        newPath.push({ ...point });
+                        isErasingSegment = false;
+                    } else {
+                        // Continue the current segment
+                        newPath.push(point);
+                    }
+                } else {
+                    // We are within the eraser radius, so skip this point
+                    isErasingSegment = true;
+                }
+            }
+
+            return newPath;
+        }).filter(path => path.length > 0);
+
+        setDrawnPaths(updatedPaths);
+    };
+
+    const toggleEraser = () => {
+        setIsErasing(!isErasing);
+    };
+
+    const clearCanvas = () => {
+        setDrawnPaths([]);
+        setElements([]);
+    };
+
+    const StyleControls = ({ element }) => {
+        if (!element) return null;
+        
+        return (
+            <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '20px',
+                padding: '15px',
+                backgroundColor: '#2d2d2d',
+                borderRadius: '8px',
+                marginTop: '20px'
+            }}>
+                {/* Existing opacity and scale controls */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                    <label style={{ color: 'white' }}>Opacity:</label>
+                    <input
+                        type="range"
+                        min="0.1"
+                        max="1"
+                        step="0.1"
+                        value={element.opacity}
+                        onChange={(e) => handleOpacityChange(e.target.value)}
+                        style={{ width: '100px' }}
+                    />
+                    <span style={{ color: 'white' }}>{(element.opacity * 100).toFixed(0)}%</span>
+                </div>
+                
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                    <label style={{ color: 'white' }}>Scale:</label>
+                    <input
+                        type="range"
+                        min="0.5"
+                        max="2"
+                        step="0.1"
+                        value={element.scale}
+                        onChange={(e) => handleScaleChange(e.target.value)}
+                        style={{ width: '100px' }}
+                    />
+                    <span style={{ color: 'white' }}>{(element.scale * 100).toFixed(0)}%</span>
+                </div>
+
+                {/* Direct size controls with number input */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                    <label style={{ color: 'white' }}>Width:</label>
+                    <input
+                        type="number"
+                        value={Math.round(element.width)}
+                        onChange={(e) => handleSizeChange(e.target.value, 'width')}
+                        style={{
+                            width: '60px',
+                            padding: '4px',
+                            backgroundColor: '#1e1e1e',
+                            color: 'white',
+                            border: '1px solid #444',
+                            borderRadius: '4px'
+                        }}
+                    />
+                    <label style={{ color: 'white', marginLeft: '10px' }}>Height:</label>
+                    <input
+                        type="number"
+                        value={Math.round(element.height)}
+                        onChange={(e) => handleSizeChange(e.target.value, 'height')}
+                        style={{
+                            width: '60px',
+                            padding: '4px',
+                            backgroundColor: '#1e1e1e',
+                            color: 'white',
+                            border: '1px solid #444',
+                            borderRadius: '4px'
+                        }}
+                    />
+                </div>
+
+                {/* Add aspect ratio lock toggle */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                    <label style={{ color: 'white' }}>Lock Aspect Ratio:</label>
+                    <input
+                        type="checkbox"
+                        checked={element.lockAspectRatio}
+                        onChange={handleToggleAspectRatio}
+                        style={{ cursor: 'pointer' }}
+                    />
+                </div>
+            </div>
+        );
+    };
+
+    const handleSizeChange = (value, dimension) => {
+        if (selectedElement) {
+            const numValue = Math.max(20, parseInt(value) || 20); // Minimum size of 20px
+            
+            const updatedElements = elements.map(el => {
+                if (el.id === selectedElement.id) {
+                    if (el.lockAspectRatio) {
+                        // If aspect ratio is locked, adjust both dimensions proportionally
+                        const aspectRatio = el.width / el.height;
+                        if (dimension === 'width') {
+                            return {
+                                ...el,
+                                width: numValue,
+                                height: Math.round(numValue / aspectRatio)
+                            };
+                        } else {
+                            return {
+                                ...el,
+                                height: numValue,
+                                width: Math.round(numValue * aspectRatio)
+                            };
+                        }
+                    } else {
+                        // If aspect ratio is not locked, adjust only the specified dimension
+                        return {
+                            ...el,
+                            [dimension]: numValue
+                        };
+                    }
+                }
+                return el;
+            });
+            
+            setElements(updatedElements);
+            const updatedElement = updatedElements.find(el => el.id === selectedElement.id);
+            if (updatedElement) {
+                setSelectedElement(updatedElement);
+            }
+        }
+    };
+
+    const handleToggleAspectRatio = () => {
+        if (selectedElement) {
+            const updatedElements = elements.map(el => {
+                if (el.id === selectedElement.id) {
+                    return {
+                        ...el,
+                        lockAspectRatio: !el.lockAspectRatio
+                    };
+                }
+                return el;
+            });
+            
+            setElements(updatedElements);
+            const updatedElement = updatedElements.find(el => el.id === selectedElement.id);
+            if (updatedElement) {
+                setSelectedElement(updatedElement);
+            }
+        }
+    };
+
+    const handleOpacityChange = (value) => {
+        if (selectedElement) {
+            const updatedElements = elements.map(el => {
+                if (el.id === selectedElement.id) {
+                    return {
+                        ...el,
+                        opacity: parseFloat(value)
+                    };
+                }
+                return el;
+            });
+            
+            setElements(updatedElements);
+            const updatedElement = updatedElements.find(el => el.id === selectedElement.id);
+            if (updatedElement) {
+                setSelectedElement(updatedElement);
+            }
+        }
+    };
+
+    const handleScaleChange = (value) => {
+        if (selectedElement) {
+            const updatedElements = elements.map(el => {
+                if (el.id === selectedElement.id) {
+                    return {
+                        ...el,
+                        scale: parseFloat(value)
+                    };
+                }
+                return el;
+            });
+            
+            setElements(updatedElements);
+            const updatedElement = updatedElements.find(el => el.id === selectedElement.id);
+            if (updatedElement) {
+                setSelectedElement(updatedElement);
+            }
+        }
+    };
 
     return (
         <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', backgroundColor: '#121212' }}>
@@ -373,10 +708,44 @@ const Storyboard = () => {
                                 </button>
                             ))}
                     </div>
+                    <button
+                        onClick={toggleEraser}
+                        style={{
+                            width: '100%',
+                            padding: '8px',
+                            marginTop: '15px',
+                            backgroundColor: isErasing ? '#f44336' : '#4CAF50',
+                            color: 'white',
+                            border: 'none',
+                            borderRadius: '4px',
+                            cursor: 'pointer'
+                        }}
+                    >
+                        {isErasing ? 'Switch to Draw' : 'Switch to Erase'}
+                    </button>
+                    <button
+                        onClick={clearCanvas}
+                        style={{
+                            width: '100%',
+                            padding: '8px',
+                            marginTop: '10px',
+                            backgroundColor: '#f44336',
+                            color: 'white',
+                            border: 'none',
+                            borderRadius: '4px',
+                            cursor: 'pointer'
+                        }}
+                    >
+                        Clear Entire Canvas
+                    </button>
                 </div>
 
-                {/* Canvas Area */}
-                <div style={{ flex: 1 }}>
+                {/* Main Content Area */}
+                <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
+                    {/* Style Controls just below the toolbar */}
+                    <StyleControls element={selectedElement} />
+
+                    {/* Canvas Area */}
                     <div 
                         ref={canvasRef}
                         id="canvas-area"
@@ -387,9 +756,13 @@ const Storyboard = () => {
                             border: '2px solid #333',
                             borderRadius: '8px',
                             position: 'relative',
-                            overflow: 'hidden'
+                            overflow: 'hidden',
+                            marginTop: '20px'
                         }}
                         onClick={handleCanvasClick}
+                        onMouseDown={handleMouseDown}
+                        onMouseMove={handleMouseMove}
+                        onMouseUp={handleMouseUp}
                         onDragOver={handleDragOver}
                     >
                         {sortedElements.map(element => (
@@ -418,152 +791,39 @@ const Storyboard = () => {
                             >
                                 {defaultShapes[element.type].image}
                                 
-                                {/* Render resize handles when element is selected */}
                                 {selectedElement?.id === element.id && (
                                     <>
-                                        {/* Top handle */}
-                                        <div
-                                            className="resize-handle n"
-                                            onMouseDown={(e) => handleResizeStart(e, element, 'n')}
-                                            style={{
-                                                position: 'absolute',
-                                                top: -5,
-                                                left: '50%',
-                                                transform: 'translateX(-50%)',
-                                                width: 10,
-                                                height: 10,
-                                                background: '#4CAF50',
-                                                borderRadius: '50%',
-                                                cursor: 'n-resize',
-                                                zIndex: 1000
-                                            }}
-                                        />
-                                        
-                                        {/* Bottom handle */}
-                                        <div
-                                            className="resize-handle s"
-                                            onMouseDown={(e) => handleResizeStart(e, element, 's')}
-                                            style={{
-                                                position: 'absolute',
-                                                bottom: -5,
-                                                left: '50%',
-                                                transform: 'translateX(-50%)',
-                                                width: 10,
-                                                height: 10,
-                                                background: '#4CAF50',
-                                                borderRadius: '50%',
-                                                cursor: 's-resize',
-                                                zIndex: 1000
-                                            }}
-                                        />
-                                        
-                                        {/* Left handle */}
-                                        <div
-                                            className="resize-handle w"
-                                            onMouseDown={(e) => handleResizeStart(e, element, 'w')}
-                                            style={{
-                                                position: 'absolute',
-                                                left: -5,
-                                                top: '50%',
-                                                transform: 'translateY(-50%)',
-                                                width: 10,
-                                                height: 10,
-                                                background: '#4CAF50',
-                                                borderRadius: '50%',
-                                                cursor: 'w-resize',
-                                                zIndex: 1000
-                                            }}
-                                        />
-                                        
-                                        {/* Right handle */}
-                                        <div
-                                            className="resize-handle e"
-                                            onMouseDown={(e) => handleResizeStart(e, element, 'e')}
-                                            style={{
-                                                position: 'absolute',
-                                                right: -5,
-                                                top: '50%',
-                                                transform: 'translateY(-50%)',
-                                                width: 10,
-                                                height: 10,
-                                                background: '#4CAF50',
-                                                borderRadius: '50%',
-                                                cursor: 'e-resize',
-                                                zIndex: 1000
-                                            }}
-                                        />
-                                        
-                                        {/* Top-left handle */}
-                                        <div
-                                            className="resize-handle nw"
-                                            onMouseDown={(e) => handleResizeStart(e, element, 'nw')}
-                                            style={{
-                                                position: 'absolute',
-                                                top: -5,
-                                                left: -5,
-                                                width: 10,
-                                                height: 10,
-                                                background: '#4CAF50',
-                                                borderRadius: '50%',
-                                                cursor: 'nw-resize',
-                                                zIndex: 1000
-                                            }}
-                                        />
-                                        
-                                        {/* Top-right handle */}
-                                        <div
-                                            className="resize-handle ne"
-                                            onMouseDown={(e) => handleResizeStart(e, element, 'ne')}
-                                            style={{
-                                                position: 'absolute',
-                                                top: -5,
-                                                right: -5,
-                                                width: 10,
-                                                height: 10,
-                                                background: '#4CAF50',
-                                                borderRadius: '50%',
-                                                cursor: 'ne-resize',
-                                                zIndex: 1000
-                                            }}
-                                        />
-                                        
-                                        {/* Bottom-left handle */}
-                                        <div
-                                            className="resize-handle sw"
-                                            onMouseDown={(e) => handleResizeStart(e, element, 'sw')}
-                                            style={{
-                                                position: 'absolute',
-                                                bottom: -5,
-                                                left: -5,
-                                                width: 10,
-                                                height: 10,
-                                                background: '#4CAF50',
-                                                borderRadius: '50%',
-                                                cursor: 'sw-resize',
-                                                zIndex: 1000
-                                            }}
-                                        />
-                                        
-                                        {/* Bottom-right handle */}
-                                        <div
-                                            className="resize-handle se"
-                                            onMouseDown={(e) => handleResizeStart(e, element, 'se')}
-                                            style={{
-                                                position: 'absolute',
-                                                bottom: -5,
-                                                right: -5,
-                                                width: 10,
-                                                height: 10,
-                                                background: '#4CAF50',
-                                                borderRadius: '50%',
-                                                cursor: 'se-resize',
-                                                zIndex: 1000
-                                            }}
-                                        />
+                                        <ResizeHandle position="n" cursor="n-resize" 
+                                            onMouseDown={(e) => handleResizeStart(e, element, 'n')} />
+                                        <ResizeHandle position="s" cursor="s-resize"
+                                            onMouseDown={(e) => handleResizeStart(e, element, 's')} />
+                                        <ResizeHandle position="e" cursor="e-resize"
+                                            onMouseDown={(e) => handleResizeStart(e, element, 'e')} />
+                                        <ResizeHandle position="w" cursor="w-resize"
+                                            onMouseDown={(e) => handleResizeStart(e, element, 'w')} />
+                                        <ResizeHandle position="nw" cursor="nw-resize"
+                                            onMouseDown={(e) => handleResizeStart(e, element, 'nw')} />
+                                        <ResizeHandle position="ne" cursor="ne-resize"
+                                            onMouseDown={(e) => handleResizeStart(e, element, 'ne')} />
+                                        <ResizeHandle position="sw" cursor="sw-resize"
+                                            onMouseDown={(e) => handleResizeStart(e, element, 'sw')} />
+                                        <ResizeHandle position="se" cursor="se-resize"
+                                            onMouseDown={(e) => handleResizeStart(e, element, 'se')} />
                                     </>
                                 )}
                             </div>
                         ))}
+
+                        {/* Render drawn paths */}
+                        <svg style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%' }}>
+                            {drawnPaths.map((path, index) => (
+                                <polyline
+                                    key={index}
+                                    points={path.map(p => `${p.x},${p.y}`).join(' ')}
+                                    style={{ fill: 'none', stroke: 'black', strokeWidth: 2 }}
+                                />
+                            ))}
+                        </svg>
                     </div>
 
                     {/* Controls for selected element */}
