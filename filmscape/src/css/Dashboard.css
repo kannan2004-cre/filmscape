@@ -16,11 +16,11 @@ html, body {
     display: flex;
     flex-direction: column;
     width: 260px;
-    border-right: 2px solid rgba(255, 215, 0, 0.2); /* Subtle gold border */
+    border-right: 1px solid #4A4E5C; /* Tertiary color for border */
     height: 100%;
-    background-color: rgba(25, 25, 25, 0.95); /* Dark background matching login */
+    background-color: #0F1115; /* Darker than primary */
     padding-left: 0px;
-    box-shadow: 2px 0 10px rgba(0, 0, 0, 0.2);
+    box-shadow: 2px 0 10px rgba(0, 0, 0, 0.4);
 }
 
 li {
@@ -37,17 +37,23 @@ li {
 }
 
 .sidebar h1 a {
-    color: #FFD700; /* Gold */
+    color: #E6B45E; /* Secondary accent color */
 }
 
 .sidebar li a {
     padding-top: 20px;
-    color: #E5E5E5; /* Light gray */
+    color: #C9CCD1; /* Light gray for sidebar links */
 }
 
 .sidebar li a:hover {
-    color: #FFF0A0; /* Light gold */
+    color: #E6B45E; /* Secondary accent color for hover */
     transition: 0.3s ease;
+}
+
+.sidebar li a.active {
+    color: #E6B45E; /* Secondary accent color for active link */
+    border-left: 3px solid #E6B45E; /* Left border indicator for active item */
+    padding-left: 10px;
 }
 
 .logout-button {
@@ -58,7 +64,7 @@ li {
     align-items: center;
     margin: 40px;
     margin-top: auto;
-    background-color: #D92121; /* Cinema red */
+    background-color: #B54E4E; /* Muted red for logout */
     color: #FFFFFF;
     border-radius: 5px;
     cursor: pointer;
@@ -66,30 +72,69 @@ li {
 }
 
 .logout-button:hover {
-    background-color: #FF3333; /* Lighter red */
+    background-color: #C75B5B; /* Lighter red for hover */
     transition: 0.3s ease;
 }
 
 .dashboard-display {
-    background: linear-gradient(-45deg, #1a1a1a, #2c2c2c, #0f0f0f, #232323); /* Matching login gradient */
-    background-size: 400% 400%;
-    animation: gradient 15s ease infinite;
+    background: #1E2028; /* Primary dark background */
     width: 100%;
     height: 100%;
-    color: #E5E5E5; /* Light gray */
+    color: #C9CCD1; /* Light gray text */
     text-align: center;
     padding-top: 100px;
     overflow-y: auto;
 }
 
-@keyframes gradient {
-    0% {
-        background-position: 0% 50%;
-    }
-    50% {
-        background-position: 100% 50%;
-    }
-    100% {
-        background-position: 0% 50%;
-    }
+/* Add some subtle texture to the dashboard area */
+.dashboard-display::after {
+    content: "";
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-image: radial-gradient(#4A4E5C 1px, transparent 1px);
+    background-size: 30px 30px;
+    opacity: 0.03;
+    pointer-events: none;
+    z-index: -1;
+}
+
+/* Card styling for dashboard content */
+.dashboard-card {
+    background-color: #262A35; /* Slightly lighter than primary */
+    border-radius: 8px;
+    padding: 20px;
+    margin: 20px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    border: 1px solid #4A4E5C; /* Tertiary color for border */
+    text-align: left;
+}
+
+.dashboard-card h3 {
+    color: #E6B45E; /* Secondary accent color */
+    margin-top: 0;
+    font-weight: 600;
+}
+
+/* Status indicators for dashboard items */
+.status-indicator {
+    display: inline-block;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    margin-right: 8px;
+}
+
+.status-completed {
+    background-color: #5C8A72; /* Muted green */
+}
+
+.status-in-progress {
+    background-color: #E6B45E; /* Secondary accent color */
+}
+
+.status-not-started {
+    background-color: #4A4E5C; /* Tertiary color */
 }

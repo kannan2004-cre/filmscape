@@ -1,4 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { db, auth } from '../firebaseConfig'; // Ensure this path is correct
+import { doc, getDoc, updateDoc } from 'firebase/firestore'; // Import Firestore functions
 import Navbar from '../Components/Navbar';
 
 const defaultShapes = {
@@ -72,6 +74,42 @@ const Storyboard = () => {
     const [isDrawing, setIsDrawing] = useState(false);
     const [drawnPaths, setDrawnPaths] = useState([]);
     const [isErasing, setIsErasing] = useState(false);
+    const [gradient, setGradient] = useState({ color1: '#ffffff', color2: '#000000', direction: 'to right' });
+    const [shadow, setShadow] = useState({ color: '#000000', offsetX: 5, offsetY: 5, blur: 10 });
+    const [projects, setProjects] = useState([]);
+    const [selectedProject, setSelectedProject] = useState("");
+    const [scenes, setScenes] = useState([]);
+    const [currentScene, setCurrentScene] = useState(null);
+    const [showSceneModal, setShowSceneModal] = useState(false);
+    const [newSceneName, setNewSceneName] = useState("");
+    const [showLoadScriptsModal, setShowLoadScriptsModal] = useState(false);
+    const [selectedLoadProject, setSelectedLoadProject] = useState("");
+    const [showNewProjectModal, setShowNewProjectModal] = useState(false);
+
+    const user = auth.currentUser;
+    let userId;
+    if (user != null) {
+        userId = user.uid;
+    }
+
+    useEffect(() => {
+        if (userId) {
+            fetchProjects();
+        }
+    }, [userId]);
+
+    const fetchProjects = async () => {
+        try {
+            const userRef = doc(db, "users", userId);
+            const userDoc = await getDoc(userRef);
+            if (userDoc.exists()) {
+                const userData = userDoc.data();
+                setProjects(userData.projects || []);
+            }
+        } catch (error) {
+            console.log("Error fetching projects:", error);
+        }
+    };
 
     const handleAddElement = (type) => {
         const newElement = {
@@ -296,6 +334,8 @@ const Storyboard = () => {
                 break;
             case 'se':
                 updateDimensions(rotatedDX, rotatedDY, -1, -1);
+                break;
+            default:
                 break;
         }
 
@@ -657,224 +697,475 @@ const Storyboard = () => {
         }
     };
 
+    const handleGradientChange = (field, value) => {
+        setGradient(prev => ({ ...prev, [field]: value }));
+    };
+
+    const handleShadowChange = (field, value) => {
+        setShadow(prev => ({ ...prev, [field]: value }));
+    };
+
+    const handleSaveScene = () => {
+        if (projects.length > 0) {
+            setShowSceneModal(true); // Show scene selection modal
+        } else {
+            setShowNewProjectModal(true); // Show new project creation modal
+        }
+    };
+
+    const flattenDrawnPaths = (paths) => {
+        return paths.map((path, pathIndex) => 
+            path.map(point => ({ ...point, pathIndex }))
+        ).flat();
+    };
+
+    const reconstructDrawnPaths = (flatPaths) => {
+        const paths = [];
+        flatPaths.forEach(point => {
+            if (!paths[point.pathIndex]) {
+                paths[point.pathIndex] = [];
+            }
+            paths[point.pathIndex].push({ x: point.x, y: point.y });
+        });
+        return paths;
+    };
+
+    const saveSceneToProject = async () => {
+        if (!selectedProject || !newSceneName.trim() || (elements.length === 0 && drawnPaths.length === 0)) return;
+        try {
+            const userRef = doc(db, "users", userId);
+            const userDoc = await getDoc(userRef);
+            if (userDoc.exists()) {
+                const userData = userDoc.data();
+                const updatedProjects = userData.projects.map((project) => {
+                    if (project.projectName === selectedProject) {
+                        let sceneExists = false;
+                        const updatedScenes = (project.scenes || []).map((scene) => {
+                            if (scene.sceneName === newSceneName) {
+                                sceneExists = true;
+                                if (window.confirm(`A scene named "${newSceneName}" already exists. Do you want to replace it?`)) {
+                                    return {
+                                        ...scene,
+                                        elements,
+                                        drawnPaths: flattenDrawnPaths(drawnPaths), // Save flattened drawn paths
+                                        lastModified: new Date().toISOString(),
+                                    };
+                                } else {
+                                    return scene;
+                                }
+                            }
+                            return scene;
+                        });
+
+                        if (!sceneExists) {
+                            updatedScenes.push({
+                                sceneName: newSceneName,
+                                elements,
+                                drawnPaths: flattenDrawnPaths(drawnPaths), // Save flattened drawn paths
+                                createdAt: new Date().toISOString(),
+                                lastModified: new Date().toISOString(),
+                            });
+                        }
+
+                        return {
+                            ...project,
+                            scenes: updatedScenes,
+                        };
+                    }
+                    return project;
+                });
+                await updateDoc(userRef, {
+                    projects: updatedProjects,
+                });
+                setNewSceneName("");
+                setSelectedProject("");
+                setShowSceneModal(false);
+                setProjects(updatedProjects);
+                setCurrentScene(null);
+            }
+        } catch (error) {
+            console.log("Error saving scene:", error);
+        }
+    };
+
+    const loadScene = async () => {
+        setShowLoadScriptsModal(true);
+    };
+
+    const handleProjectSelection = (projectName) => {
+        const project = projects.find(p => p.projectName === projectName);
+        if (project) {
+            setScenes(project.scenes || []);
+        }
+    };
+
+    const handleLoadScene = (scene) => {
+        setElements(scene.elements);
+        setDrawnPaths(reconstructDrawnPaths(scene.drawnPaths || [])); // Load and reconstruct drawn paths
+        setCurrentScene(scene);
+        setShowLoadScriptsModal(false);
+    };
+
     return (
         <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', backgroundColor: '#121212' }}>
             <Navbar />
-            <div style={{ display: 'flex', padding: '20px', flex: 1 }}>
-                {/* Toolbar */}
-                <div style={{ 
-                    width: '200px',
-                    backgroundColor: '#1e1e1e',
-                    padding: '20px',
-                    marginRight: '20px',
-                    borderRadius: '8px',
-                    height: 'fit-content'
-                }}>
-                    <select 
-                        value={selectedCategory}
-                        onChange={(e) => setSelectedCategory(e.target.value)}
-                        style={{
-                            width: '100%',
-                            padding: '8px',
-                            marginBottom: '15px',
-                            backgroundColor: '#2d2d2d',
-                            color: 'white',
-                            border: '1px solid #333',
-                            borderRadius: '4px'
-                        }}
-                    >
-                        {categories.map(category => (
-                            <option key={category} value={category}>{category}</option>
-                        ))}
-                    </select>
-
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
-                        {Object.entries(defaultShapes)
-                            .filter(([_, shape]) => shape.category === selectedCategory)
-                            .map(([type, shape]) => (
-                                <button
-                                    key={type}
-                                    onClick={() => handleAddElement(type)}
-                                    style={{
-                                        padding: '10px',
-                                        backgroundColor: '#2d2d2d',
-                                        border: '1px solid #333',
-                                        borderRadius: '4px',
-                                        cursor: 'pointer',
-                                        fontSize: '20px'
-                                    }}
-                                >
-                                    {shape.image}
-                                </button>
-                            ))}
-                    </div>
-                    <button
-                        onClick={toggleEraser}
-                        style={{
-                            width: '100%',
-                            padding: '8px',
-                            marginTop: '15px',
-                            backgroundColor: isErasing ? '#f44336' : '#4CAF50',
-                            color: 'white',
-                            border: 'none',
-                            borderRadius: '4px',
-                            cursor: 'pointer'
-                        }}
-                    >
-                        {isErasing ? 'Switch to Draw' : 'Switch to Erase'}
+            <div style={{ display: 'flex', flexDirection: 'column', padding: '20px', flex: 1 }}>
+                {/* Save and Load Buttons */}
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '20px' }}>
+                    <button onClick={handleSaveScene} style={{ padding: '8px', backgroundColor: '#4CAF50', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer' }}>
+                        Save Scene
                     </button>
-                    <button
-                        onClick={clearCanvas}
-                        style={{
-                            width: '100%',
-                            padding: '8px',
-                            marginTop: '10px',
-                            backgroundColor: '#f44336',
-                            color: 'white',
-                            border: 'none',
-                            borderRadius: '4px',
-                            cursor: 'pointer'
-                        }}
-                    >
-                        Clear Entire Canvas
+                    <button onClick={loadScene} style={{ padding: '8px', backgroundColor: '#4CAF50', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer' }}>
+                        Load Scene
                     </button>
                 </div>
 
                 {/* Main Content Area */}
-                <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
-                    {/* Style Controls just below the toolbar */}
-                    <StyleControls element={selectedElement} />
-
-                    {/* Canvas Area */}
-                    <div 
-                        ref={canvasRef}
-                        id="canvas-area"
-                        style={{
-                            width: '800px',
-                            height: '500px',
-                            backgroundColor: 'white',
-                            border: '2px solid #333',
-                            borderRadius: '8px',
-                            position: 'relative',
-                            overflow: 'hidden',
-                            marginTop: '20px'
-                        }}
-                        onClick={handleCanvasClick}
-                        onMouseDown={handleMouseDown}
-                        onMouseMove={handleMouseMove}
-                        onMouseUp={handleMouseUp}
-                        onDragOver={handleDragOver}
-                    >
-                        {sortedElements.map(element => (
-                            <div
-                                key={element.id}
-                                draggable={!isResizing}
-                                onClick={(e) => handleSelect(e, element)}
-                                onDragStart={(e) => handleDragStart(e, element)}
-                                onDragEnd={handleDragEnd}
-                                style={{
-                                    position: 'absolute',
-                                    left: element.x,
-                                    top: element.y,
-                                    width: element.width,
-                                    height: element.height,
-                                    fontSize: `${Math.min(element.width, element.height) * 0.8}px`,
-                                    cursor: isResizing ? 'auto' : 'move',
-                                    transform: `rotate(${element.rotation}deg)`,
-                                    border: selectedElement?.id === element.id ? '2px dashed #4CAF50' : 'none',
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    justifyContent: 'center',
-                                    userSelect: 'none',
-                                    zIndex: element.zIndex
-                                }}
-                            >
-                                {defaultShapes[element.type].image}
-                                
-                                {selectedElement?.id === element.id && (
-                                    <>
-                                        <ResizeHandle position="n" cursor="n-resize" 
-                                            onMouseDown={(e) => handleResizeStart(e, element, 'n')} />
-                                        <ResizeHandle position="s" cursor="s-resize"
-                                            onMouseDown={(e) => handleResizeStart(e, element, 's')} />
-                                        <ResizeHandle position="e" cursor="e-resize"
-                                            onMouseDown={(e) => handleResizeStart(e, element, 'e')} />
-                                        <ResizeHandle position="w" cursor="w-resize"
-                                            onMouseDown={(e) => handleResizeStart(e, element, 'w')} />
-                                        <ResizeHandle position="nw" cursor="nw-resize"
-                                            onMouseDown={(e) => handleResizeStart(e, element, 'nw')} />
-                                        <ResizeHandle position="ne" cursor="ne-resize"
-                                            onMouseDown={(e) => handleResizeStart(e, element, 'ne')} />
-                                        <ResizeHandle position="sw" cursor="sw-resize"
-                                            onMouseDown={(e) => handleResizeStart(e, element, 'sw')} />
-                                        <ResizeHandle position="se" cursor="se-resize"
-                                            onMouseDown={(e) => handleResizeStart(e, element, 'se')} />
-                                    </>
-                                )}
-                            </div>
-                        ))}
-
-                        {/* Render drawn paths */}
-                        <svg style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%' }}>
-                            {drawnPaths.map((path, index) => (
-                                <polyline
-                                    key={index}
-                                    points={path.map(p => `${p.x},${p.y}`).join(' ')}
-                                    style={{ fill: 'none', stroke: 'black', strokeWidth: 2 }}
-                                />
+                <div style={{ display: 'flex', flex: 1 }}>
+                    {/* Toolbar */}
+                    <div style={{ 
+                        width: '200px',
+                        backgroundColor: '#1e1e1e',
+                        padding: '20px',
+                        marginRight: '20px',
+                        borderRadius: '8px',
+                        height: 'fit-content'
+                    }}>
+                        <select 
+                            value={selectedCategory}
+                            onChange={(e) => setSelectedCategory(e.target.value)}
+                            style={{
+                                width: '100%',
+                                padding: '8px',
+                                marginBottom: '15px',
+                                backgroundColor: '#2d2d2d',
+                                color: 'white',
+                                border: '1px solid #333',
+                                borderRadius: '4px'
+                            }}
+                        >
+                            {categories.map(category => (
+                                <option key={category} value={category}>{category}</option>
                             ))}
-                        </svg>
+                        </select>
+
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+                            {Object.entries(defaultShapes)
+                                .filter(([_, shape]) => shape.category === selectedCategory)
+                                .map(([type, shape]) => (
+                                    <button
+                                        key={type}
+                                        onClick={() => handleAddElement(type)}
+                                        style={{
+                                            padding: '10px',
+                                            backgroundColor: '#2d2d2d',
+                                            border: '1px solid #333',
+                                            borderRadius: '4px',
+                                            cursor: 'pointer',
+                                            fontSize: '20px'
+                                        }}
+                                    >
+                                        {shape.image}
+                                    </button>
+                                ))}
+                        </div>
+                        <button
+                            onClick={toggleEraser}
+                            style={{
+                                width: '100%',
+                                padding: '8px',
+                                marginTop: '15px',
+                                backgroundColor: isErasing ? '#f44336' : '#4CAF50',
+                                color: 'white',
+                                border: 'none',
+                                borderRadius: '4px',
+                                cursor: 'pointer'
+                            }}
+                        >
+                            {isErasing ? 'Switch to Draw' : 'Switch to Erase'}
+                        </button>
+                        <button
+                            onClick={clearCanvas}
+                            style={{
+                                width: '100%',
+                                padding: '8px',
+                                marginTop: '10px',
+                                backgroundColor: '#f44336',
+                                color: 'white',
+                                border: 'none',
+                                borderRadius: '4px',
+                                cursor: 'pointer'
+                            }}
+                        >
+                            Clear Entire Canvas
+                        </button>
+
+                        {/* Gradient Controls */}
+                        <div style={{ marginTop: '20px' }}>
+                            <label style={{ color: 'white' }}>Gradient Color 1:</label>
+                            <input
+                                type="color"
+                                value={gradient.color1}
+                                onChange={(e) => handleGradientChange('color1', e.target.value)}
+                                style={{ width: '100%', marginBottom: '10px' }}
+                            />
+                            <label style={{ color: 'white' }}>Gradient Color 2:</label>
+                            <input
+                                type="color"
+                                value={gradient.color2}
+                                onChange={(e) => handleGradientChange('color2', e.target.value)}
+                                style={{ width: '100%', marginBottom: '10px' }}
+                            />
+                            <label style={{ color: 'white' }}>Gradient Direction:</label>
+                            <select
+                                value={gradient.direction}
+                                onChange={(e) => handleGradientChange('direction', e.target.value)}
+                                style={{ width: '100%', marginBottom: '10px' }}
+                            >
+                                <option value="to right">To Right</option>
+                                <option value="to left">To Left</option>
+                                <option value="to top">To Top</option>
+                                <option value="to bottom">To Bottom</option>
+                                <option value="to top right">To Top Right</option>
+                                <option value="to top left">To Top Left</option>
+                                <option value="to bottom right">To Bottom Right</option>
+                                <option value="to bottom left">To Bottom Left</option>
+                            </select>
+                        </div>
+
+                        {/* Shadow Controls */}
+                        <div style={{ marginTop: '20px' }}>
+                            <label style={{ color: 'white' }}>Shadow Color:</label>
+                            <input
+                                type="color"
+                                value={shadow.color}
+                                onChange={(e) => handleShadowChange('color', e.target.value)}
+                                style={{ width: '100%', marginBottom: '10px' }}
+                            />
+                            <label style={{ color: 'white' }}>Offset X:</label>
+                            <input
+                                type="number"
+                                value={shadow.offsetX}
+                                onChange={(e) => handleShadowChange('offsetX', parseInt(e.target.value))}
+                                style={{ width: '100%', marginBottom: '10px' }}
+                            />
+                            <label style={{ color: 'white' }}>Offset Y:</label>
+                            <input
+                                type="number"
+                                value={shadow.offsetY}
+                                onChange={(e) => handleShadowChange('offsetY', parseInt(e.target.value))}
+                                style={{ width: '100%', marginBottom: '10px' }}
+                            />
+                            <label style={{ color: 'white' }}>Blur:</label>
+                            <input
+                                type="number"
+                                value={shadow.blur}
+                                onChange={(e) => handleShadowChange('blur', parseInt(e.target.value))}
+                                style={{ width: '100%', marginBottom: '10px' }}
+                            />
+                        </div>
                     </div>
 
-                    {/* Controls for selected element */}
-                    {selectedElement && (
-                        <div style={{ 
-                            marginTop: '20px',
-                            display: 'flex',
-                            gap: '10px'
-                        }}>
-                            <button
-                                onClick={() => handleRotate('left')}
-                                style={{
-                                    padding: '8px 16px',
-                                    backgroundColor: '#4CAF50',
-                                    color: 'white',
-                                    border: 'none',
-                                    borderRadius: '4px',
-                                    cursor: 'pointer'
-                                }}
-                            >
-                                Rotate Left
-                            </button>
-                            <button
-                                onClick={() => handleRotate('right')}
-                                style={{
-                                    padding: '8px 16px',
-                                    backgroundColor: '#4CAF50',
-                                    color: 'white',
-                                    border: 'none',
-                                    borderRadius: '4px',
-                                    cursor: 'pointer'
-                                }}
-                            >
-                                Rotate Right
-                            </button>
-                            <button
-                                onClick={handleDelete}
-                                style={{
-                                    padding: '8px 16px',
-                                    backgroundColor: '#f44336',
-                                    color: 'white',
-                                    border: 'none',
-                                    borderRadius: '4px',
-                                    cursor: 'pointer',
-                                    marginLeft: 'auto'
-                                }}
-                            >
-                                Delete
-                            </button>
+                    {/* Canvas Area */}
+                    <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
+                        {/* Style Controls just below the toolbar */}
+                        <StyleControls element={selectedElement} />
+
+                        <div 
+                            ref={canvasRef}
+                            id="canvas-area"
+                            style={{
+                                width: '800px',
+                                height: '500px',
+                                background: `linear-gradient(${gradient.direction}, ${gradient.color1}, ${gradient.color2})`,
+                                border: '2px solid #333',
+                                borderRadius: '8px',
+                                position: 'relative',
+                                overflow: 'hidden',
+                                marginTop: '20px'
+                            }}
+                            onClick={handleCanvasClick}
+                            onMouseDown={handleMouseDown}
+                            onMouseMove={handleMouseMove}
+                            onMouseUp={handleMouseUp}
+                            onDragOver={handleDragOver}
+                        >
+                            {/* Render drawn paths */}
+                            <svg style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%' }}>
+                                {drawnPaths.map((path, index) => (
+                                    <polyline
+                                        key={index}
+                                        points={path.map(p => `${p.x},${p.y}`).join(' ')}
+                                        style={{
+                                            fill: 'none',
+                                            stroke: 'black',
+                                            strokeWidth: 2,
+                                            filter: `drop-shadow(${shadow.offsetX}px ${shadow.offsetY}px ${shadow.blur}px ${shadow.color})`
+                                        }}
+                                    />
+                                ))}
+                            </svg>
+                            {sortedElements.map(element => (
+                                <div
+                                    key={element.id}
+                                    draggable={!isResizing}
+                                    onClick={(e) => handleSelect(e, element)}
+                                    onDragStart={(e) => handleDragStart(e, element)}
+                                    onDragEnd={handleDragEnd}
+                                    style={{
+                                        position: 'absolute',
+                                        left: element.x,
+                                        top: element.y,
+                                        width: element.width,
+                                        height: element.height,
+                                        fontSize: `${Math.min(element.width, element.height) * 0.8}px`,
+                                        cursor: isResizing ? 'auto' : 'move',
+                                        transform: `rotate(${element.rotation}deg)`,
+                                        border: selectedElement?.id === element.id ? '2px dashed #4CAF50' : 'none',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        userSelect: 'none',
+                                        zIndex: element.zIndex
+                                    }}
+                                >
+                                    {defaultShapes[element.type].image}
+                                    
+                                    {selectedElement?.id === element.id && (
+                                        <>
+                                            <ResizeHandle position="n" cursor="n-resize" 
+                                                onMouseDown={(e) => handleResizeStart(e, element, 'n')} />
+                                            <ResizeHandle position="s" cursor="s-resize"
+                                                onMouseDown={(e) => handleResizeStart(e, element, 's')} />
+                                            <ResizeHandle position="e" cursor="e-resize"
+                                                onMouseDown={(e) => handleResizeStart(e, element, 'e')} />
+                                            <ResizeHandle position="w" cursor="w-resize"
+                                                onMouseDown={(e) => handleResizeStart(e, element, 'w')} />
+                                            <ResizeHandle position="nw" cursor="nw-resize"
+                                                onMouseDown={(e) => handleResizeStart(e, element, 'nw')} />
+                                            <ResizeHandle position="ne" cursor="ne-resize"
+                                                onMouseDown={(e) => handleResizeStart(e, element, 'ne')} />
+                                            <ResizeHandle position="sw" cursor="sw-resize"
+                                                onMouseDown={(e) => handleResizeStart(e, element, 'sw')} />
+                                            <ResizeHandle position="se" cursor="se-resize"
+                                                onMouseDown={(e) => handleResizeStart(e, element, 'se')} />
+                                        </>
+                                    )}
+                                </div>
+                            ))}
                         </div>
-                    )}
+
+                        {/* Controls for selected element */}
+                        {selectedElement && (
+                            <div style={{ 
+                                marginTop: '20px',
+                                display: 'flex',
+                                gap: '10px'
+                            }}>
+                                <button
+                                    onClick={() => handleRotate('left')}
+                                    style={{
+                                        padding: '8px 16px',
+                                        backgroundColor: '#4CAF50',
+                                        color: 'white',
+                                        border: 'none',
+                                        borderRadius: '4px',
+                                        cursor: 'pointer'
+                                    }}
+                                >
+                                    Rotate Left
+                                </button>
+                                <button
+                                    onClick={() => handleRotate('right')}
+                                    style={{
+                                        padding: '8px 16px',
+                                        backgroundColor: '#4CAF50',
+                                        color: 'white',
+                                        border: 'none',
+                                        borderRadius: '4px',
+                                        cursor: 'pointer'
+                                    }}
+                                >
+                                    Rotate Right
+                                </button>
+                                <button
+                                    onClick={handleDelete}
+                                    style={{
+                                        padding: '8px 16px',
+                                        backgroundColor: '#f44336',
+                                        color: 'white',
+                                        border: 'none',
+                                        borderRadius: '4px',
+                                        cursor: 'pointer',
+                                        marginLeft: 'auto'
+                                    }}
+                                >
+                                    Delete
+                                </button>
+                            </div>
+                        )}
+
+                        {/* Scene Modal */}
+                        {showSceneModal && (
+                            <div className="modal">
+                                <h2>Select Project</h2>
+                                <select
+                                    onChange={(e) => setSelectedProject(e.target.value)}
+                                    value={selectedProject}
+                                >
+                                    <option value="" className="option">Select a project</option>
+                                    {projects.map((project, index) => (
+                                        <option key={index} value={project.projectName}>
+                                            {project.projectName}
+                                        </option>
+                                    ))}
+                                </select>
+                                <input
+                                    type="text"
+                                    placeholder="Enter scene name"
+                                    value={newSceneName}
+                                    onChange={(e) => setNewSceneName(e.target.value)}
+                                />
+                                <button onClick={saveSceneToProject}>Save Scene</button>
+                                <button onClick={() => setShowSceneModal(false)}>Cancel</button>
+                            </div>
+                        )}
+
+                        {/* Load Scenes Modal */}
+                        {showLoadScriptsModal && (
+                            <div className="modal">
+                                <h2>Select Project to Load Scenes</h2>
+                                <select
+                                    onChange={(e) => {
+                                        setSelectedLoadProject(e.target.value);
+                                        handleProjectSelection(e.target.value);
+                                    }}
+                                    value={selectedLoadProject}
+                                >
+                                    <option value="" className="option">Select a project</option>
+                                    {projects.map((project, index) => (
+                                        <option key={index} value={project.projectName}>
+                                            {project.projectName}
+                                        </option>
+                                    ))}
+                                </select>
+                                {scenes.length > 0 && (
+                                    <div>
+                                        <h3>Select Scene</h3>
+                                        <ul>
+                                            {scenes.map((scene, index) => (
+                                                <li key={index}>
+                                                    {scene.sceneName}
+                                                    <button onClick={() => handleLoadScene(scene)}>Load</button>
+                                                </li>
+                                            ))}
+                                        </ul>
+                                    </div>
+                                )}
+                                <button onClick={() => setShowLoadScriptsModal(false)}>Cancel</button>
+                            </div>
+                        )}
+                    </div>
                 </div>
             </div>
         </div>

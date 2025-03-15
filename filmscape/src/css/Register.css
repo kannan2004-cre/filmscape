@@ -6,7 +6,7 @@ html, body {
 }
   
 body {
-    background: linear-gradient(-45deg, #0A0A0A, #1A1A1A, #2E2E2E, #404040);
+    background: linear-gradient(-45deg, rgb(158, 179, 186), white);
     background-size: 400% 400%;
     animation: gradient 15s ease infinite;
 }
@@ -38,13 +38,10 @@ form{
     display: flex;
     flex-direction: column;
     gap: 30px;
-    color:#FFD700;
-    background-color: #1A1A1A;
-    box-shadow: 0px 0px 15px 5px rgba(255, 215, 0, 0.3), 0px 0px 30px 15px rgba(0, 0, 0, 0.8);
+    color: rgb(217, 143, 46);
 }
 
 form{
-    border: 1px solid #1C1C2D;
     padding: 30px;
     padding-left: 50px;
     padding-right: 50px;
@@ -52,7 +49,7 @@ form{
 }
 
 form label{
-    color: #CCCCCC;
+    color: rgb(186, 161, 117);
     font-weight: bold;
 }
 
@@ -60,23 +57,23 @@ form input[type="email"],
 form input[type="password"],
 form input[type="text"] {
     width: 100%;
-    color: #FAF9F6;
-    background-color: #2F2F2F;
-    border: none;
+    color: rgb(186, 161, 117);
+    background-color: white;
+    border: 1px solid rgb(171, 170, 150);
     height: 50px;
     border-radius: 5px;
     -webkit-box-shadow: 0 0 0 30px #2F2F2F inset !important;
-    -webkit-text-fill-color: #FAF9F6 !important;
+    -webkit-text-fill-color: rgb(186, 161, 117) !important;
     padding: 5px;
     box-sizing: border-box;
 }
 
 button{
-    background-color: #E25822;
+    background-color: rgb(217, 143, 46);
     border: none;
     height:30px;
     border-radius: 5px;
-    color: #FFFFFF;
+    color: white;
     font-weight: bold;
 }
 
@@ -87,7 +84,7 @@ form input[type="password"]:focus {
 }
 
 button:hover{
-    background-color: #D7263D;
+    background-color: rgb(204, 153, 82);
     transition: 0.3s ease-in-out, 0.3s ease-out;
 }
 form input:invalid{
@@ -111,13 +108,13 @@ form div {
 .password-requirements {
     position: absolute;
     font-size: 0.8em;
-    color: #CCCCCC;
+    color: rgb(186, 161, 117);
     margin-top: 5px;
     opacity: 1;
     transition: opacity 0.3s ease-in-out;
     left: 0;
     top: 100%;
-    background-color: #1A1A1A;
+    background-color: white;
     z-index: 1;
     padding: 10px;
     border-radius: 5px;
@@ -130,26 +127,26 @@ form div {
 }
 
 .requirement.met {
-    color: #4CAF50;
+    color: #5cb85c;
 }
 
 .requirement.unmet {
-    color: #FF5252;
+    color: #d9534f;
 }
 .redirect-text {
     text-align: center;
     font-size: 0.9em;
-    color: #CCCCCC;
+    color: rgb(171, 170, 150);
     margin: 0;
 }
 
 .redirect-text a {
-    color: #FFD700;
+    color: rgb(217, 143, 46);
     text-decoration: none;
     font-weight: bold;
 }
 
 .redirect-text a:hover {
-    color: #E25822;
+    color: rgb(204, 153, 82);
     transition: 0.3s ease-in-out;
 }
