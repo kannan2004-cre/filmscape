@@ -1,4 +1,7 @@
 import React, { useState, useEffect } from "react";
+import { Document , Packer,Paragraph,Textrun } from "docx";
+import { jspdf } from "jspdf";
+import html2canvas from "html2canvas";
 import { db, auth } from "../firebaseConfig"; // Ensure this path is correct
 import {
   arrayUnion,

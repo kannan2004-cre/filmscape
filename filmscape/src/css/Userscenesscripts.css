@@ -1,50 +1,52 @@
 .scene-div {
-    background-color: #1E1E1E;
+    background-color: #262A35; /* Slightly lighter than primary */
     width: max-content;
     height: 300px;
     margin: 20px auto;
     padding: 20px 20px;
-    border: 1px solid #333333;
+    border: 1px solid #4A4E5C; /* Tertiary color */
     border-radius: 15px;
     display: flex;
     flex-direction: column;
     justify-content: flex-start;
     align-items: center;
-    color: #ffffff;
-    box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.5);
+    color: #C9CCD1; /* Light gray text */
+    box-shadow: 0px 4px 20px rgba(0, 0, 0, 0.4);
     gap: 10px;
     flex-wrap: wrap;
     overflow-y: auto;
 }
+
 .scene-div::-webkit-scrollbar {
-    width: 5px; 
+    width: 5px;
 }
 
 .scene-div::-webkit-scrollbar-track {
-    background: #2E2E2E; 
-    border-radius: 10px; 
+    background: #1E2028; /* Primary dark color */
+    border-radius: 10px;
 }
 
 .scene-div::-webkit-scrollbar-thumb {
-    background: #FFD700; 
+    background: #E6B45E; /* Secondary accent color */
     border-radius: 10px;
 }
 
 .scene-div::-webkit-scrollbar-thumb:hover {
-    background: #C0392B;
+    background: #F0C27B; /* Lighter version of secondary */
     transition: all 0.3s ease-in-out;
 }
 
 .scene-head {
     position: sticky;
     top: 0;
-    background-color: #1E1E1E;
+    background-color: #262A35; /* Match scene-div background */
     z-index: 1;
     padding: 5px 0;
     width: 100%;
     text-align: center;
     margin-top: -90px;
 }
+
 .scene-container {
     width: 100%;
     display: flex;
@@ -52,22 +54,61 @@
     align-items: center;
     gap: 10px;
 }
-.scene-head h2{
+
+.scene-head h2 {
     margin-top: 100px;
     margin-right: 300px;
     margin-bottom: 20px;
-    color: #FFD700;
+    color: #E6B45E; /* Secondary accent color */
     font-size: 30px;
     text-align: left;
-    position:sticky;
+    position: sticky;
 }
-.scene-item{
+
+.scene-item {
     display: flex;
     flex-direction: row;
     align-items: center;
     flex-wrap: wrap;
     gap: 20px;
+    border-bottom: 1px solid #4A4E5C; /* Subtle divider */
+    padding-bottom: 15px;
+    width: 100%;
 }
-.scene-item h3{
+
+.scene-item h3 {
     margin-right: 100px;
+    color: #FFFFFF; /* White text for scene headers */
+}
+
+/* Adding some accent styling for scene numbers/identifiers */
+.scene-number {
+    color: #E6B45E; /* Secondary accent color */
+    font-weight: 700;
+    min-width: 40px;
+    text-align: center;
+    background-color: rgba(230, 180, 94, 0.1); /* Very subtle highlight */
+    padding: 5px;
+    border-radius: 4px;
+}
+
+/* Adding a style for scene timestamps/durations */
+.scene-duration {
+    color: #4A4E5C; /* Tertiary color */
+    font-size: 0.9em;
+    margin-left: auto;
+}
+
+/* Adding a hover effect on scene items for better interactivity */
+.scene-item:hover {
+    background-color: rgba(230, 180, 94, 0.05); /* Very subtle highlight on hover */
+    transform: translateX(5px);
+    transition: all 0.2s ease;
+}
+
+/* Style for active/selected scene */
+.scene-item.active {
+    border-left: 3px solid #E6B45E; /* Secondary accent color */
+    padding-left: 10px;
+    background-color: rgba(230, 180, 94, 0.08); /* Slightly more visible highlight */
 }

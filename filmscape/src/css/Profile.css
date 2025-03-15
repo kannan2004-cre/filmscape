@@ -1,28 +1,33 @@
 .profile-div {
-    background-color: #1E1E1E;
+    background-color: #262A35; /* Slightly lighter than primary */
     width: 400px;
     margin: 20px auto;
     padding: 30px 20px;
-    border: 1px solid #333333;
+    border: 1px solid #4A4E5C; /* Tertiary color */
     border-radius: 15px;
     display: flex;
     flex-direction: column;
     align-items: center;
-    color: #ffffff;
-    box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.5);
+    color: #C9CCD1; /* Light gray text */
+    box-shadow: 0px 4px 20px rgba(0, 0, 0, 0.4);
     gap: 10px;
 }
-.profile-head{
+
+.profile-head {
     margin-right: 300px;
     margin-bottom: 20px;
-    color: #FFD700;
+    color: #E6B45E; /* Secondary accent color */
     font-size: 30px;
 }
+
 .profile-div img {
     width: 120px;
     height: 120px;
     border-radius: 15px;
     margin-bottom: 20px;
+    border: 2px solid #4A4E5C; /* Tertiary color border */
+    filter: contrast(0.95) brightness(0.95); /* Slight adjustment to fit the theme */
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
 }
 
 .profile-sub {
@@ -37,19 +42,49 @@
     display: flex;
     justify-content: space-between;
     align-items: baseline;
+    padding: 8px 0;
+    border-bottom: 1px solid rgba(74, 78, 92, 0.3); /* Subtle tertiary color border */
+}
+
+.profile-sub .info-row:last-child {
+    border-bottom: none; /* Remove border from last item */
 }
 
 .info-row h3 {
     font-weight: 600;
-    color: #ffffff;
+    color: #FFFFFF; /* White for field labels */
     margin: 0;
     font-size: 16px;
 }
 
 .info-row h4 {
     font-weight: 400;
-    color: #A0A0A0;
+    color: #C9CCD1; /* Light gray for values */
     margin: 0;
     font-size: 16px;
     text-align: right;
+}
+
+/* Adding highlight for important profile information */
+.info-row.highlight h4 {
+    color: #E6B45E; /* Secondary accent color for important values */
+    font-weight: 500;
+}
+
+/* Edit profile button styling */
+.edit-profile-btn {
+    background-color: transparent;
+    border: 1px solid #E6B45E; /* Secondary accent color */
+    color: #E6B45E; /* Secondary accent color */
+    padding: 8px 16px;
+    border-radius: 5px;
+    margin-top: 20px;
+    cursor: pointer;
+    font-weight: 500;
+    transition: all 0.3s ease;
+}
+
+.edit-profile-btn:hover {
+    background-color: rgba(230, 180, 94, 0.1); /* Very subtle highlight */
+    transform: translateY(-2px);
 }
