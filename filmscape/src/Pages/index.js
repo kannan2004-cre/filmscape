@@ -35,8 +35,8 @@ function Index() {
             <p className="hero-subtitle">{filmFrames[currentFrame]}</p>
           </div>
           <div className="hero-actions">
-            <button className="primary-button" onClick={() => navigate("/dashboard")}>
-              Launch Dashboard
+            <button className="primary-button" onClick={() => navigate("/storyboard")}>
+              Launch Storyboard
             </button>
             <button className="secondary-button" onClick={() => navigate("/scripts")}>
               Create New Script
