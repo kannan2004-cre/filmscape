@@ -1,11 +1,12 @@
 @import url('https://fonts.googleapis.com/css2?family=Kanit:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&family=Montserrat:ital,wght@0,100..900;1,100..900&family=Noto+Sans+Mono:wght@100..900&family=Noto+Sans:ital,wght@0,100..900;1,100..900&family=Open+Sans:ital,wght@0,300..800;1,300..800&family=Raleway:ital,wght@0,100..900;1,100..900&family=Roboto+Mono:ital,wght@0,100..700;1,100..700&display=swap');
 
+/* Keep the desktop view exactly as it is */
 .navmain {
-    background-color: #1E2028;
+    background: transparent;
     display: flex;
     height: 75px;
     font-family: "Raleway", serif;
-    position:relative;
+    position: relative;
 }
 
 .navmain img {
@@ -31,14 +32,15 @@
     margin-top: 30px;
 }
 
-.navitems a {
+.navitems a, #log span {
     text-decoration: none;
     font-size: 20px;
     color: #C9CCD1;
     font-weight: bold;
+    cursor: pointer;
 }
 
-.navitems a:hover {
+.navitems a:hover, #log span:hover {
     color: #E6B45E;
     transition: 0.3s ease-in-out;
     font-weight: bold;
@@ -68,47 +70,113 @@
     color: #E6B45E;
 }
 
+/* Add mobile menu toggle button (only visible on small screens) */
+.mobile-menu-toggle {
+    display: none;
+    cursor: pointer;
+    position: absolute;
+    right: 20px;
+    top: 25px;
+    z-index: 1001;
+}
+
+.mobile-menu-toggle span {
+    display: block;
+    width: 30px;
+    height: 3px;
+    background-color: #E6B45E;
+    margin: 6px 0;
+    transition: 0.3s;
+}
+
+/* Responsive styles - improved from your original */
+@media (max-width: 991px) {
+    .navitems ul {
+        margin-left: 50px;
+        gap: 30px;
+    }
+    
+    .navitems button {
+        margin-left: 50px;
+    }
+}
+
 @media (max-width: 768px) {
+    .mobile-menu-toggle {
+        display: block;
+    }
+    
     .navmain {
-        flex-direction: column;
-        height: auto;
-        align-items: center;
+        height: 75px;
+        overflow: visible;
     }
-
-    .navmain img {
-        margin: 10px 0;
+    
+    .navitems {
+        position: absolute;
+        top: 75px;
+        left: 0;
+        width: 100%;
+        background-color: rgba(15, 17, 21, 0.95);
+        z-index: 1000;
+        max-height: 0;
+        overflow: hidden;
+        transition: max-height 0.5s ease;
     }
-
-    .navmain h2 {
-        margin: 10px 0;
-        font-size: 24px;
+    
+    .navitems.active {
+        max-height: 400px;
     }
-
+    
     .navitems ul {
         flex-direction: column;
+        width: 100%;
         margin: 0;
+        padding: 20px 0;
         gap: 20px;
     }
-
-    .navitems a {
-        font-size: 18px;
+    
+    .navitems li {
+        width: 100%;
+        text-align: center;
     }
-
+    
+    .navitems a, #log span {
+        display: inline-block;
+        width: 100%;
+        padding: 10px 0;
+    }
+    
     .navitems button {
-        margin: 20px 0;
-        width: 100px;
+        margin: 10px auto;
+        display: block;
     }
 }
 
 @media (max-width: 480px) {
+    .navmain {
+        padding: 0 10px;
+    }
+    
     .navmain h2 {
         font-size: 20px;
+        margin-top: 25px;
     }
-
-    .navitems a {
+    
+    .navmain img {
+        width: 50px;
+        height: 50px;
+        margin-top: 10px;
+    }
+    
+    .mobile-menu-toggle {
+        right: 10px;
+        top: 20px;
+    }
+    
+    .navitems a, #log span {
         font-size: 16px;
     }
-
+    
     .navitems button {
         width: 90px;
         font-size: 15px;
