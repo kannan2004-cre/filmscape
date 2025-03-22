@@ -1,15 +1,17 @@
 import React, { useEffect, useState } from "react";
 import Register from "./Pages/Register";
 import Login from "./Pages/Login";
+import Collaboration from "./Pages/Collaboration";
 import Dashboard from "./Pages/Dashboard";
 import Profile from "./Pages/Profile";
-import UScripts from "./Pages/userScripts";
+import Projects from "./Pages/Projects";
 import UScenes from "./Pages/userScenes";
 import USettings from "./Pages/userSettings";
 import Index from "./Pages/index";
 import Scripts from "./Pages/Scripts";
 import Navbar from "./Components/Navbar";
 import Storyboard from "./Pages/Storyboard";
+import View from "./Pages/View"; // Import the View component
 import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
 import { onAuthStateChanged, signOut } from "firebase/auth";
 import { auth } from "./firebaseConfig";
@@ -59,6 +61,9 @@ function App() {
           <Route path="/index" element={<Index />} />
           <Route path="/scripts" element={<Scripts />} />
           <Route path="/storyboard" element={<Storyboard />} />
+          
+          {/* Shared project viewing route - accessible to anyone */}
+          <Route path="/shared/:shareId" element={<View />} />
 
           {/* Protected Dashboard with nested routes */}
           <Route
@@ -74,9 +79,12 @@ function App() {
 
             {/* Nested routes */}
             <Route path="profile" element={<Profile user={user} />} />
-            <Route path="uscripts" element={<UScripts user={user} />} />
+            <Route path="uscripts" element={<Projects user={user} />} />
             <Route path="uscenes" element={<UScenes user={user} />} />
             <Route path="usettings" element={<USettings user={user} />} />
+            
+            {/* Project sharing feature - protected route */}
+            {/* <Route path="share" element={<Collaboration />} /> */}
           </Route>
 
           {/* Add this redirect route */}

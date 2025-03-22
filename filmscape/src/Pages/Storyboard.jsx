@@ -2,6 +2,8 @@ import React, { useState, useEffect, useRef } from 'react';
 import { db, auth } from '../firebaseConfig'; // Ensure this path is correct
 import { doc, getDoc, updateDoc } from 'firebase/firestore'; // Import Firestore functions
 import Navbar from '../Components/Navbar';
+import html2canvas from 'html2canvas'; // Import html2canvas for capturing the canvas
+import { toast } from 'react-toastify'; // Import toast for notifications
 
 const defaultShapes = {
     // Characters
@@ -746,6 +748,7 @@ const Storyboard = () => {
                                 if (window.confirm(`A scene named "${newSceneName}" already exists. Do you want to replace it?`)) {
                                     return {
                                         ...scene,
+                                        sceneName: newSceneName, // Assign the scene name entered by the user
                                         elements,
                                         drawnPaths: flattenDrawnPaths(drawnPaths), // Save flattened drawn paths
                                         lastModified: new Date().toISOString(),
@@ -759,7 +762,7 @@ const Storyboard = () => {
 
                         if (!sceneExists) {
                             updatedScenes.push({
-                                sceneName: newSceneName,
+                                sceneName: newSceneName, // Assign the scene name entered by the user
                                 elements,
                                 drawnPaths: flattenDrawnPaths(drawnPaths), // Save flattened drawn paths
                                 createdAt: new Date().toISOString(),
@@ -788,6 +791,46 @@ const Storyboard = () => {
         }
     };
 
+    const saveEditedScene = async () => {
+        if (!currentScene || !currentScene.sceneName) return;
+        try {
+            const userRef = doc(db, "users", userId);
+            const userDoc = await getDoc(userRef);
+            if (userDoc.exists()) {
+                const userData = userDoc.data();
+                const updatedProjects = userData.projects.map((project) => {
+                    if (project.projectName === selectedProject) {
+                        const updatedScenes = (project.scenes || []).map((scene) => {
+                            if (scene.sceneName === currentScene.sceneName) {
+                                return {
+                                    ...scene,
+                                    elements,
+                                    drawnPaths: flattenDrawnPaths(drawnPaths),
+                                    lastModified: new Date().toISOString(),
+                                };
+                            }
+                            return scene;
+                        });
+
+                        return {
+                            ...project,
+                            scenes: updatedScenes,
+                        };
+                    }
+                    return project;
+                });
+                await updateDoc(userRef, {
+                    projects: updatedProjects,
+                });
+                setProjects(updatedProjects);
+                setCurrentScene(null);
+                toast.success("Scene saved successfully!"); // Show toast notification
+            }
+        } catch (error) {
+            console.log("Error saving edited scene:", error);
+        }
+    };
+
     const loadScene = async () => {
         setShowLoadScriptsModal(true);
     };
@@ -806,6 +849,16 @@ const Storyboard = () => {
         setShowLoadScriptsModal(false);
     };
 
+    const downloadSceneAsJPG = () => {
+        const canvasArea = document.getElementById('canvas-area');
+        html2canvas(canvasArea).then(canvas => {
+            const link = document.createElement('a');
+            link.href = canvas.toDataURL('image/jpeg');
+            link.download = 'scene.jpg';
+            link.click();
+        });
+    };
+
     return (
         <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', backgroundColor: '#121212' }}>
             <Navbar />
@@ -817,6 +870,12 @@ const Storyboard = () => {
                     </button>
                     <button onClick={loadScene} style={{ padding: '8px', backgroundColor: '#4CAF50', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer' }}>
                         Load Scene
+                    </button>
+                    <button onClick={downloadSceneAsJPG} style={{ padding: '8px', backgroundColor: '#4CAF50', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer' }}>
+                        Download as JPG
+                    </button>
+                    <button onClick={saveEditedScene} style={{ padding: '8px', backgroundColor: '#4CAF50', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer' }}>
+                        Save Edited Scene
                     </button>
                 </div>
 

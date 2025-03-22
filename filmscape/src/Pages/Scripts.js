@@ -1,14 +1,9 @@
 import React, { useState, useEffect } from "react";
-import { Document , Packer,Paragraph,Textrun } from "docx";
-import { jspdf } from "jspdf";
+import { Document, Packer, Paragraph, TextRun } from "docx";
+import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
 import { db, auth } from "../firebaseConfig"; // Ensure this path is correct
-import {
-  arrayUnion,
-  doc,
-  getDoc,
-  updateDoc,
-} from "firebase/firestore"; // Import Firestore functions
+import { arrayUnion, doc, getDoc, updateDoc } from "firebase/firestore"; // Import Firestore functions
 import "../css/ScriptEditor.css";
 import Navbar from "../Components/Navbar";
 
@@ -25,11 +20,31 @@ function Scripts() {
   const [selectedLoadProject, setSelectedLoadProject] = useState("");
   const [scriptsInProject, setScriptsInProject] = useState([]);
   const [currentScript, setCurrentScript] = useState(null);
+  // Add language state
+  const [selectedLanguage, setSelectedLanguage] = useState("en");
+  
   const user = auth.currentUser;
   let userId;
   if (user != null) {
     userId = user.uid;
   }
+
+  // List of available languages
+  const languages = [
+    { code: "en", name: "English" },
+    { code: "es", name: "Spanish" },
+    { code: "fr", name: "French" },
+    { code: "de", name: "German" },
+    { code: "zh", name: "Chinese" },
+    { code: "ja", name: "Japanese" },
+    { code: "hi", name: "Hindi" },
+    { code: "ar", name: "Arabic" },
+    { code: "ru", name: "Russian" },
+    { code: "pt", name: "Portuguese" },
+    { code: "it", name: "Italian" },
+    { code: "ml", name: "Malayalam" } // Added Malayalam
+  ];
+
   const handleSaveScript = () => {
     if (projects.length > 0) {
       setShowProjectModal(true); // Show project selection modal
@@ -43,7 +58,7 @@ function Scripts() {
   };
 
   const handleProjectSelection = (projectName) => {
-    const project = projects.find(p => p.projectName === projectName);
+    const project = projects.find((p) => p.projectName === projectName);
     if (project) {
       setScriptsInProject(project.scripts || []);
     }
@@ -53,7 +68,14 @@ function Scripts() {
     setText(script.content);
     setCurrentScript(script);
     setShowLoadScriptsModal(false);
-    document.querySelector('.text-editor').innerHTML = script.content;
+    const canvasElement = document.querySelector(".scripts-canvas");
+    if (canvasElement) {
+      canvasElement.innerHTML = script.content;
+    }
+    // Set language if it exists in the script
+    if (script.language) {
+      setSelectedLanguage(script.language);
+    }
   };
 
   const createNewProject = async () => {
@@ -81,7 +103,8 @@ function Scripts() {
   const createNew = () => {
     setShowNewProjectModal(true);
     setShowProjectModal(false);
-  }
+  };
+
   const saveScriptToProject = async () => {
     if (!selectedProject || !newScriptName.trim() || !text.trim()) return;
     try {
@@ -92,22 +115,32 @@ function Scripts() {
         const updatedProjects = userData.projects.map((project) => {
           if (project.projectName === selectedProject) {
             const updatedScripts = (project.scripts || []).map((script) => {
-              if (currentScript && script.scriptName === currentScript.scriptName) {
+              if (
+                currentScript &&
+                script.scriptName === currentScript.scriptName
+              ) {
                 return {
                   ...script,
                   content: text,
                   lastModified: new Date().toISOString(),
+                  language: selectedLanguage // Add language info when updating
                 };
               }
               return script;
             });
 
-            if (!currentScript || !updatedScripts.some(script => script.scriptName === currentScript.scriptName)) {
+            if (
+              !currentScript ||
+              !updatedScripts.some(
+                (script) => script.scriptName === currentScript.scriptName
+              )
+            ) {
               updatedScripts.push({
                 scriptName: newScriptName,
                 content: text,
                 createdAt: new Date().toISOString(),
                 lastModified: new Date().toISOString(),
+                language: selectedLanguage // Add language info when creating
               });
             }
 
@@ -138,6 +171,21 @@ function Scripts() {
     }
   }, [userId]);
 
+  // Effect to update spellcheck language
+  useEffect(() => {
+    const canvas = document.querySelector(".scripts-canvas");
+    if (canvas) {
+      canvas.lang = selectedLanguage;
+      
+      // Set appropriate font for Malayalam
+      if (selectedLanguage === "ml") {
+        canvas.style.fontFamily = "'Manjari', 'Noto Sans Malayalam', sans-serif";
+      } else {
+        canvas.style.fontFamily = ""; // Reset to default
+      }
+    }
+  }, [selectedLanguage]);
+
   const fetchProjects = async () => {
     try {
       const userRef = doc(db, "users", userId);
@@ -163,6 +211,185 @@ function Scripts() {
     document.execCommand(align, false, null);
   };
 
+  const handleLanguageChange = (e) => {
+    setSelectedLanguage(e.target.value);
+  };
+
+  const handleDownloadDoc = async () => {
+    try {
+      // Get the content from the canvas
+      const canvas = document.querySelector(".scripts-canvas");
+      if (!canvas) {
+        throw new Error("Canvas element not found");
+      }
+      
+      // Get canvas content
+      const content = canvas.innerText || canvas.textContent;
+      
+      // Create document with actual content
+      const doc = new Document({
+        sections: [
+          {
+            properties: {},
+            children: [
+              new Paragraph({
+                children: [
+                  new TextRun(content),
+                ]
+              })
+            ]
+          }
+        ]
+      });
+      
+      // Generate blob and trigger download
+      const blob = await Packer.toBlob(doc);
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = "script.docx";
+      document.body.appendChild(link);
+      link.click();
+      
+      // Cleanup
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+      
+    } catch (error) {
+      console.error("Error generating document:", error);
+      alert("Failed to generate document: " + error.message);
+    }
+  };
+
+  const handleDownloadPdf = async () => {
+    try {
+      // Get the content from the canvas
+      const canvas = document.querySelector(".scripts-canvas");
+      if (!canvas) {
+        console.log("Canvas element not found");
+        return;
+      }
+
+      // Create a temporary container that exactly clones the canvas's content and styling
+      const container = document.createElement("div");
+      container.style.position = "absolute";
+      container.style.left = "-9999px";
+      container.style.top = "0";
+      container.style.width = "210mm"; // A4 width
+      container.style.padding = "20mm"; // Margins
+      container.style.background = "white";
+      container.style.color = "black";
+
+      // Copy all computed styles from the canvas
+      const canvasStyles = window.getComputedStyle(canvas);
+      const relevantStyles = [
+        "fontFamily",
+        "fontSize",
+        "fontWeight",
+        "lineHeight",
+        "textAlign",
+        "color",
+        "letterSpacing",
+        "wordSpacing",
+      ];
+
+      relevantStyles.forEach((style) => {
+        container.style[style] = canvasStyles.getPropertyValue(style);
+      });
+
+      // Clone the canvas content exactly
+      container.innerHTML = canvas.innerHTML;
+
+      // Add to document to calculate dimensions
+      document.body.appendChild(container);
+
+      // Generate the PDF with html2canvas with higher quality settings
+      const htmlCanvas = await html2canvas(container, {
+        scale: 3, // Higher scale for better quality
+        useCORS: true,
+        logging: false,
+        backgroundColor: "white",
+        allowTaint: true,
+        letterRendering: true, // Better text rendering
+      });
+
+      // Remove the temporary element
+      document.body.removeChild(container);
+
+      // Create PDF
+      const imgWidth = 210; // A4 width in mm
+      const pageHeight = 297; // A4 height in mm
+      const imgHeight = (htmlCanvas.height * imgWidth) / htmlCanvas.width;
+
+      const pdf = new jsPDF({
+        orientation: imgHeight > pageHeight ? "landscape" : "portrait",
+        unit: "mm",
+        format: "a4",
+      });
+
+      // Handle multi-page content if needed
+      let heightLeft = imgHeight;
+      let position = 0;
+      let pageNumber = 1;
+
+      // Add first page
+      pdf.addImage(
+        htmlCanvas.toDataURL("image/jpeg", 1.0), // Use JPEG with highest quality
+        "JPEG",
+        0,
+        position,
+        imgWidth,
+        imgHeight,
+        undefined,
+        "FAST"
+      );
+      heightLeft -= pageHeight;
+
+      // Add additional pages if content overflows
+      while (heightLeft > 0) {
+        position = heightLeft - imgHeight;
+        pdf.addPage();
+        pageNumber++;
+        pdf.addImage(
+          htmlCanvas.toDataURL("image/jpeg", 1.0),
+          "JPEG",
+          0,
+          position,
+          imgWidth,
+          imgHeight,
+          undefined,
+          "FAST"
+        );
+        heightLeft -= pageHeight;
+      }
+
+      // Extract text content for searchability
+      const textContent = canvas.textContent || canvas.innerText;
+
+      // Make text content searchable in PDF
+      for (let i = 1; i <= pageNumber; i++) {
+        pdf.setPage(i);
+        pdf.setFontSize(1); // Very small font (invisible)
+        pdf.setTextColor(255, 255, 255, 0); // Transparent text
+
+        // Add searchable text layer (invisible)
+        const textContentPart = textContent.substring(
+          (i - 1) * 3000, // Rough character count per page
+          i * 3000
+        );
+
+        if (textContentPart.trim()) {
+          const textLines = pdf.splitTextToSize(textContentPart, imgWidth - 20);
+          pdf.text(10, 10, textLines);
+        }
+      }
+
+      pdf.save("script.pdf");
+    } catch (error) {
+      console.error("Error in handleDownloadPdf:", error);
+    }
+  };
+
   return (
     <div className="scripts-main">
       <Navbar />
@@ -172,8 +399,12 @@ function Scripts() {
             <li className="file" onClick={handleSaveScript}>
               Save Script
             </li>
-            <li className="edit">Download .doc</li>
-            <li className="view">Download .pdf</li>
+            <li className="edit" onClick={handleDownloadDoc}>
+              Download .doc
+            </li>
+            <li className="view" onClick={handleDownloadPdf}>
+              Download .pdf
+            </li>
           </ul>
         </div>
         <div className="head-second">
@@ -189,7 +420,9 @@ function Scripts() {
             onChange={(e) => setSelectedProject(e.target.value)}
             value={selectedProject}
           >
-            <option value="" className="option">Select a project</option>
+            <option value="" className="option">
+              Select a project
+            </option>
             {projects.map((project, index) => (
               <option key={index} value={project.projectName}>
                 {project.projectName}
@@ -235,7 +468,9 @@ function Scripts() {
             }}
             value={selectedLoadProject}
           >
-            <option value="" className="option">Select a project</option>
+            <option value="" className="option">
+              Select a project
+            </option>
             {projects.map((project, index) => (
               <option key={index} value={project.projectName}>
                 {project.projectName}
@@ -249,7 +484,14 @@ function Scripts() {
                 {scriptsInProject.map((script, index) => (
                   <li key={index}>
                     {script.scriptName}
-                    <button onClick={() => handleLoadScript(script)}>Load</button>
+                    {script.language && (
+                      <span className="script-language">
+                        ({languages.find(l => l.code === script.language)?.name || script.language})
+                      </span>
+                    )}
+                    <button onClick={() => handleLoadScript(script)}>
+                      Load
+                    </button>
                   </li>
                 ))}
               </ul>
@@ -260,47 +502,110 @@ function Scripts() {
       )}
 
       <div className="script-write">
-        <div className="scripts-canvas" style={{ textAlign: alignment }}>
-          <div dangerouslySetInnerHTML={{ __html: text }} />
-        </div>
+        {/* Make the canvas itself the editable area */}
+        <div 
+          className="scripts-canvas" 
+          contentEditable
+          style={{ textAlign: alignment }}
+          onInput={(e) => {
+            // Store the exact HTML content
+            setText(e.target.innerHTML);
+            
+            // Ensure cursor position is maintained
+            const selection = window.getSelection();
+            if (selection.rangeCount > 0) {
+              const range = selection.getRangeAt(0);
+              const offset = range.startOffset;
+              const node = range.startContainer;
+
+              // After React updates, restore cursor position
+              setTimeout(() => {
+                if (document.contains(node)) {
+                  try {
+                    const newRange = document.createRange();
+                    newRange.setStart(node, offset);
+                    newRange.setEnd(node, offset);
+                    selection.removeAllRanges();
+                    selection.addRange(newRange);
+                  } catch (e) {
+                    // Handle any errors in restoring selection
+                    console.log("Error restoring selection:", e);
+                  }
+                }
+              }, 0);
+            }
+          }}
+          onPaste={(e) => {
+            // Get HTML content if available
+            const htmlContent = e.clipboardData.getData("text/html");
+            const plainText = e.clipboardData.getData("text/plain");
+
+            e.preventDefault();
+
+            // If HTML content is available and seems like formatted text
+            if (
+              htmlContent &&
+              (htmlContent.includes("<b>") ||
+                htmlContent.includes("<i>") ||
+                htmlContent.includes("<p>") ||
+                htmlContent.includes("<div>"))
+            ) {
+              // Create a temporary div to sanitize and process the HTML
+              const tempDiv = document.createElement("div");
+              tempDiv.innerHTML = htmlContent;
+
+              // Clean up any unwanted elements or attributes
+              const cleanHTML = tempDiv.innerHTML;
+
+              // Insert the clean HTML at cursor position
+              document.execCommand("insertHTML", false, cleanHTML);
+            } else {
+              // Fall back to plain text insertion
+              document.execCommand("insertText", false, plainText);
+            }
+          }}
+          placeholder="Write your script here..."
+          spellCheck="true"
+          lang={selectedLanguage}
+        ></div>
+        
         <div className="scripts-console">
           <div className="console-text">
             <h2>Toolbar</h2>
-            <p>Add a new script using this toolbar more efficiently.</p>
-            <select name="tools" id="tools">
-              <option value="heading">Heading</option>
-              <option value="Setting">Setting</option>
-              <option value="Character">Character</option>
-              <option value="Action">Action</option>
-              <option value="Dialogue">Dialogue</option>
-              <option value="Transition">Transition</option>
-              <option value="description">Description</option>
-            </select>
-            <div
-              className="text-editor"
-              contentEditable
-              onInput={(e) => setText(e.target.innerHTML)}
-              style={{ textAlign: alignment }}
-              placeholder="Write your selected script here..."
-            ></div>
-            <div className="text-formatting">
-              <button onClick={() => formatText("bold")}>B</button>
-              <button onClick={() => formatText("italic")}>I</button>
-              <button onClick={() => formatText("strikeThrough")}>S</button>
-              <button onClick={() => applyAlignment("justifyLeft")}>
-                Left
-              </button>
-              <button onClick={() => applyAlignment("justifyCenter")}>
-                Center
-              </button>
-              <button onClick={() => applyAlignment("justifyRight")}>
-                Right
-              </button>
-              <button onClick={() => applyAlignment("justifyFull")}>
-                Justify
-              </button>
+            <div className="toolbar-options">
+              {/* Language selection dropdown */}
+              <select 
+                value={selectedLanguage} 
+                onChange={handleLanguageChange}
+                className="language-selector"
+              >
+                <option value="" disabled>Select Language</option>
+                {languages.map(lang => (
+                  <option key={lang.code} value={lang.code}>
+                    {lang.name}
+                  </option>
+                ))}
+              </select>
+              
+              {/* Text formatting tools */}
+              <div className="text-formatting">
+                <button onClick={() => formatText("bold")}>B</button>
+                <button onClick={() => formatText("italic")}>I</button>
+                <button onClick={() => formatText("strikeThrough")}>S</button>
+                <button onClick={() => applyAlignment("justifyLeft")}>
+                  Left
+                </button>
+                <button onClick={() => applyAlignment("justifyCenter")}>
+                  Center
+                </button>
+                <button onClick={() => applyAlignment("justifyRight")}>
+                  Right
+                </button>
+                <button onClick={() => applyAlignment("justifyFull")}>
+                  Justify
+                </button>
+              </div>
             </div>
-            <button>Add</button>
           </div>
         </div>
       </div>

@@ -4,12 +4,12 @@ import "../css/Userscenesscripts.css";
 import { db } from '../firebaseConfig';
 import { doc, getDoc, updateDoc } from 'firebase/firestore';
 
-const UScenes = ({ user }) => {
-  const [scenes, setScenes] = useState([]);
+const Projects = ({ user }) => {
+  const [scripts, setScripts] = useState([]);
   const navigate = useNavigate();
 
   useEffect(() => {
-    const fetchScenes = async () => {
+    const fetchScripts = async () => {
       if (user) {
         try {
           const userDocRef = doc(db, "users", user.uid);
@@ -18,23 +18,23 @@ const UScenes = ({ user }) => {
           if (userSnapshot.exists()) {
             const userData = userSnapshot.data();
             const projects = userData.projects || [];
-            const allScenes = projects.flatMap(project => project.scenes || []);
-            setScenes(allScenes);
+            const allScripts = projects.flatMap(project => project.scripts || []);
+            setScripts(allScripts);
           }
         } catch (error) {
-          console.error("Error fetching scenes:", error);
+          console.error("Error fetching scripts:", error);
         }
       }
     };
 
-    fetchScenes();
+    fetchScripts();
   }, [user]);
 
-  const handleLoadScene = (scene) => {
-    navigate('/storyboard', { state: { selectedScene: scene } });
+  const handleLoadScript = (script) => {
+    navigate('/scripteditor', { state: { selectedScript: script } });
   };
 
-  const handleDeleteScene = async (sceneToDelete) => {
+  const handleDeleteScript = async (scriptToDelete) => {
     if (user) {
       try {
         const userDocRef = doc(db, "users", user.uid);
@@ -43,20 +43,20 @@ const UScenes = ({ user }) => {
         if (userSnapshot.exists()) {
           const userData = userSnapshot.data();
           const updatedProjects = userData.projects.map(project => {
-            if (project.scenes) {
+            if (project.scripts) {
               return {
                 ...project,
-                scenes: project.scenes.filter(scene => scene.sceneName !== sceneToDelete.sceneName)
+                scripts: project.scripts.filter(script => script.scriptName !== scriptToDelete.scriptName)
               };
             }
             return project;
           });
 
           await updateDoc(userDocRef, { projects: updatedProjects });
-          setScenes(prevScenes => prevScenes.filter(scene => scene.sceneName !== sceneToDelete.sceneName));
+          setScripts(prevScripts => prevScripts.filter(script => script.scriptName !== scriptToDelete.scriptName));
         }
       } catch (error) {
-        console.error("Error deleting scene:", error);
+        console.error("Error deleting script:", error);
       }
     }
   };
@@ -64,15 +64,15 @@ const UScenes = ({ user }) => {
   return (
     <div className="scene-div">
       <div className="scene-head">
-        <h2>Scenes</h2>
+        <h2>Scripts</h2>
         <div className="scene-container">
-          {scenes.map((scene, index) => (
+          {scripts.map((script, index) => (
             <div key={index} className="scene-item">
               <h4>{index + 1}.</h4>
-              <h3>{scene.sceneName}</h3>
+              <h3>{script.scriptName}</h3>
               <div style={{ display: 'flex', gap: '10px' }}>
                 <button 
-                  onClick={() => handleLoadScene(scene)} 
+                  onClick={() => handleLoadScript(script)} 
                   style={{
                     padding: '8px 16px',
                     backgroundColor: '#4CAF50',
@@ -83,10 +83,10 @@ const UScenes = ({ user }) => {
                     flex: '1'
                   }}
                 >
-                  Load Scene
+                  Load Script
                 </button>
                 <button 
-                  onClick={() => handleDeleteScene(scene)} 
+                  onClick={() => handleDeleteScript(script)} 
                   style={{
                     padding: '8px 16px',
                     backgroundColor: '#f44336',
@@ -97,7 +97,7 @@ const UScenes = ({ user }) => {
                     flex: '1'
                   }}
                 >
-                  Delete Scene
+                  Delete Script
                 </button>
               </div>
             </div>
@@ -108,4 +108,4 @@ const UScenes = ({ user }) => {
   );
 };
 
-export default UScenes;
+export default Projects;

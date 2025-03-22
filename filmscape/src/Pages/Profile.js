@@ -1,11 +1,15 @@
 import React, { useState, useEffect } from "react";
 import "../css/Profile.css";
 import { auth, db } from "../firebaseConfig";
-import { doc, getDoc } from "firebase/firestore";
+import { doc, getDoc, updateDoc } from "firebase/firestore";
 
 const Profile = () => {
   const [userData, setUserData] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [imageError, setImageError] = useState(false);
+  
+  // Default placeholder image URL (consider using a public URL that's guaranteed to work)
+  const defaultImage = "https://puremagnetik.com/cdn/shop/products/Filmscape_1024x1024.jpg?v=1604328464";
 
   useEffect(() => {
     const fetchUserData = async () => {
@@ -16,7 +20,13 @@ const Profile = () => {
           const userSnapshot = await getDoc(userDocRef);
 
           if (userSnapshot.exists()) {
-            setUserData(userSnapshot.data());
+            const data = userSnapshot.data();
+            if (!data.photoURL) {
+              // If photoURL is not set, update it with the default image
+              await updateDoc(userDocRef, { photoURL: defaultImage });
+              data.photoURL = defaultImage;
+            }
+            setUserData(data);
           } else {
             console.error("No user document found!");
           }
@@ -43,9 +53,10 @@ const Profile = () => {
     <div className="profile-div">
       <h2 className="profile-head">Profile</h2>
       <img
-        src={userData.photoURL || "../images/placeholderImage.webp"} // Use the photoURL or a placeholder
+        src={imageError ? defaultImage : userData.photoURL}
         alt="User Profile"
         className="profile-img"
+        onError={() => setImageError(true)}
       />
       <div className="profile-sub">
         <div className="info-row">
