@@ -53,6 +53,7 @@ body {
 
 .scripts-canvas {
     border: 2px solid white;
+    color: black;
     margin: 10px;
     width: 800px;
     height: 80vh;
@@ -158,6 +159,7 @@ body {
 
 .text-editor {
     border: 1px solid #ccc;
+    color: black;
     border-radius: 5px;
     padding: 10px;
     min-height: 50px;
