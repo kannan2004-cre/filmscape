@@ -7,7 +7,7 @@ import Profile from "./Pages/Profile";
 import Projects from "./Pages/Projects";
 import UScenes from "./Pages/userScenes";
 import USettings from "./Pages/userSettings";
-import Index from "./Pages/index";
+import Index from "./Pages/home";
 import Scripts from "./Pages/Scripts";
 import Navbar from "./Components/Navbar";
 import Storyboard from "./Pages/Storyboard";
