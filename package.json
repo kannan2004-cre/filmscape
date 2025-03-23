@@ -9,6 +9,7 @@
     "@testing-library/user-event": "^13.5.0",
     "all": "^0.0.0",
     "class-variance-authority": "^0.7.1",
+    "firebase": "^11.5.0",
     "konva": "^9.3.18",
     "lucide-react": "^0.483.0",
     "react": "^18.3.1",
